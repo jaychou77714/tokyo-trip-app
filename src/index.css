@@ -3,17 +3,11 @@
 @tailwind utilities;
 
 :root {
-  --color-sumi: #3D2817;
-  --color-kinari: #FAF6EC;
-  --color-kinari2: #FFFCF5;
-  --color-shu: #FF8B5A;
-  --color-usuzumi: #6B4423;
-  --color-gold: #D4B896;
-  --color-stamp: #E84E4E;
-  --color-sora: #A8C5D9;
-  --color-wakaba: #7FA468;
-  --color-kohaku: #F0B450;
-  --color-line: #E8D8B5;
+  --color-sumi: #1a1a1a;
+  --color-kinari: #f5efe6;
+  --color-shu: #c9302c;
+  --color-usuzumi: #5a5a5a;
+  --color-gold: #b8945f;
 }
 
 * {
@@ -25,7 +19,7 @@ html, body {
   padding: 0;
   background: var(--color-kinari);
   color: var(--color-sumi);
-  font-family: "Klee One", "Noto Sans JP", "Source Han Sans TC", -apple-system, sans-serif;
+  font-family: "Noto Sans JP", "Source Han Sans TC", -apple-system, sans-serif;
   font-feature-settings: "palt";
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
@@ -35,210 +29,80 @@ html, body {
   min-height: 100vh;
 }
 
-/* ===== 紙張紋理（含橫線）===== */
+/* 紙張紋理背景 */
 .paper-bg {
-  background-color: var(--color-kinari);
+  background-color: #f5efe6;
   background-image:
-    repeating-linear-gradient(
-      180deg,
-      transparent,
-      transparent 31px,
-      rgba(212, 184, 150, 0.25) 31px,
-      rgba(212, 184, 150, 0.25) 32px
-    ),
-    radial-gradient(at 15% 20%, rgba(232, 78, 78, 0.04) 0px, transparent 40%),
-    radial-gradient(at 85% 80%, rgba(168, 197, 217, 0.06) 0px, transparent 40%);
+    radial-gradient(at 20% 30%, rgba(184, 148, 95, 0.04) 0px, transparent 50%),
+    radial-gradient(at 80% 70%, rgba(201, 48, 44, 0.03) 0px, transparent 50%);
 }
 
-/* 純紙張底（無橫線）給 modal 等 */
-.paper-plain {
-  background-color: var(--color-kinari2);
-}
-
-/* ===== 紙膠帶 washi tape ===== */
-.washi {
-  position: relative;
-  display: inline-block;
-  padding: 4px 16px;
-  background: var(--color-shu);
-  color: var(--color-kinari2);
-  font-family: "Klee One", "Noto Serif JP", serif;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  background-image:
-    linear-gradient(180deg, transparent 47%, rgba(255,255,255,0.4) 47%, rgba(255,255,255,0.4) 53%, transparent 53%);
-  box-shadow: 0 2px 4px rgba(61, 40, 23, 0.12);
-}
-.washi::before, .washi::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 8px;
-  background: inherit;
-  background-image: inherit;
-}
-.washi::before {
-  left: -3px;
-  clip-path: polygon(60% 0, 100% 0, 100% 100%, 60% 100%, 100% 50%);
-}
-.washi::after {
-  right: -3px;
-  clip-path: polygon(0 0, 40% 0, 0 50%, 40% 100%, 0 100%);
-}
-.washi-blue { background-color: var(--color-sora); color: #2d5168; }
-.washi-green { background-color: var(--color-wakaba); color: #FFFCF5; }
-.washi-yellow { background-color: var(--color-kohaku); color: #6b4814; }
-
-/* 紙膠帶傾斜貼條（裝飾用，可貼在卡片角落）*/
-.washi-strip {
-  position: absolute;
-  width: 80px;
-  height: 18px;
-  background: var(--color-shu);
-  background-image: linear-gradient(180deg, transparent 47%, rgba(255,255,255,0.4) 47%, rgba(255,255,255,0.4) 53%, transparent 53%);
-  opacity: 0.85;
-  pointer-events: none;
-}
-
-/* ===== 圓形印章 ===== */
-.stamp-circle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 2px solid var(--color-stamp);
-  color: var(--color-stamp);
-  font-family: "Noto Serif JP", serif;
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.05em;
-  transform: rotate(-8deg);
-  background: rgba(250, 246, 236, 0.5);
-  flex-shrink: 0;
-}
-
-/* ===== 小印章 / 標籤 ===== */
+/* 印章效果 */
 .stamp {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1.5px solid var(--color-stamp);
-  color: var(--color-stamp);
+  border: 2px solid var(--color-shu);
+  color: var(--color-shu);
   font-family: "Noto Serif JP", serif;
   font-weight: 700;
   letter-spacing: 0.1em;
   transform: rotate(-3deg);
-  padding: 0.2rem 0.5rem;
-  background: rgba(255, 252, 245, 0.6);
+  padding: 0.25rem 0.5rem;
 }
 
-/* ===== 編輯雜誌標題（手帳風）===== */
+/* 編輯雜誌標題 */
 .editorial-title {
-  font-family: "Klee One", "Noto Serif JP", "Source Han Serif TC", serif;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.1;
-  color: var(--color-sumi);
+  font-family: "Noto Serif JP", "Source Han Serif TC", serif;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
 }
 
-/* 縱書 */
+/* 縱書效果（用於小細節） */
 .vertical-rl {
   writing-mode: vertical-rl;
   text-orientation: upright;
 }
 
-/* ===== 卡片（紙張感）===== */
-.paper-card {
-  background: var(--color-kinari2);
-  border: 1px solid var(--color-gold);
-  position: relative;
-}
-
-.paper-card-dashed {
-  background: var(--color-kinari2);
-  border: 1.5px dashed var(--color-usuzumi);
-}
-
+/* 卡片懸浮陰影 */
 .card-shadow {
-  box-shadow: 0 1px 0 rgba(212, 184, 150, 0.4), 0 4px 12px rgba(61, 40, 23, 0.06);
+  box-shadow: 0 1px 3px rgba(26, 26, 26, 0.06), 0 4px 16px rgba(26, 26, 26, 0.08);
 }
 
 .card-shadow-hover {
-  box-shadow: 0 2px 0 var(--color-shu), 0 8px 20px rgba(61, 40, 23, 0.1);
+  box-shadow: 0 4px 12px rgba(26, 26, 26, 0.1), 0 8px 32px rgba(26, 26, 26, 0.12);
 }
 
-/* ===== 雙層紙片按鈕（便利貼錯位感）===== */
-.btn-paper {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.6rem 1.2rem;
-  background: var(--color-shu);
-  color: var(--color-kinari2);
-  font-weight: 600;
-  font-family: "Klee One", "Noto Serif JP", serif;
-  letter-spacing: 0.05em;
-  cursor: pointer;
-  transition: all 0.15s;
-  border: none;
-  z-index: 1;
-}
-.btn-paper::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--color-sumi);
-  transform: translate(3px, 3px);
-  z-index: -1;
-}
-.btn-paper:hover {
-  transform: translate(-1px, -1px);
-}
-.btn-paper:hover::before {
-  transform: translate(4px, 4px);
-}
-.btn-paper:active {
-  transform: translate(2px, 2px);
-}
-.btn-paper:active::before {
-  transform: translate(1px, 1px);
-}
-
-/* ===== 滾動條（紙張感）===== */
+/* 滾動條 */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-gold);
-  border-radius: 4px;
+  background: rgba(26, 26, 26, 0.2);
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-usuzumi);
+  background: rgba(26, 26, 26, 0.4);
 }
 
-/* ===== Leaflet 樣式覆寫 ===== */
+/* Leaflet 樣式覆寫 */
 .leaflet-container {
-  font-family: "Klee One", "Noto Sans JP", sans-serif;
-  background: #EFE7D6;
+  font-family: "Noto Sans JP", sans-serif;
+  background: #ebe3d4;
 }
 .leaflet-popup-content-wrapper {
   border-radius: 4px;
-  background: var(--color-kinari2);
-  color: var(--color-sumi);
-  border: 1.5px solid var(--color-sumi);
-  box-shadow: 3px 3px 0 var(--color-sumi);
+  background: #1a1a1a;
+  color: #f5efe6;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
 }
 .leaflet-popup-tip {
-  background: var(--color-kinari2);
-  border: 1.5px solid var(--color-sumi);
+  background: #1a1a1a;
 }
 .leaflet-popup-content {
   margin: 12px 16px;
@@ -246,12 +110,11 @@ html, body {
   line-height: 1.5;
 }
 .leaflet-control-attribution {
-  background: rgba(250, 246, 236, 0.85) !important;
+  background: rgba(245, 239, 230, 0.8) !important;
   font-size: 9px !important;
-  color: var(--color-usuzumi) !important;
 }
 
-/* ===== 動畫 ===== */
+/* 動畫 */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -267,14 +130,6 @@ html, body {
 }
 .animate-shake {
   animation: shake 0.3s ease-in-out;
-}
-
-@keyframes wiggle {
-  0%, 100% { transform: rotate(-2deg); }
-  50% { transform: rotate(2deg); }
-}
-.animate-wiggle {
-  animation: wiggle 2s ease-in-out infinite;
 }
 
 /* 自訂 marker pin */
@@ -295,40 +150,15 @@ input[type="number"] {
 
 /* 按鈕焦點 */
 button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
-  outline: 2px dashed var(--color-shu);
-  outline-offset: 3px;
+  outline: 2px solid var(--color-shu);
+  outline-offset: 2px;
 }
 
-/* 虛線裝飾 */
-.deco-dashed {
-  background-image: linear-gradient(to right, var(--color-usuzumi) 50%, transparent 50%);
-  background-size: 6px 1.5px;
+/* 印刷紋路裝飾線 */
+.deco-line {
+  background-image: linear-gradient(to right, currentColor 50%, transparent 50%);
+  background-size: 8px 1px;
   background-repeat: repeat-x;
   background-position: bottom;
-  height: 1.5px;
-}
-
-/* 圓點裝飾 */
-.deco-dotted {
-  background-image: radial-gradient(circle, var(--color-usuzumi) 30%, transparent 30%);
-  background-size: 6px 6px;
-  background-repeat: repeat-x;
-  background-position: center;
-  height: 6px;
-}
-
-/* 表單元素統一樣式 */
-.form-input {
-  background: var(--color-kinari2);
-  border: 1.5px dashed var(--color-usuzumi);
-  padding: 0.6rem 0.9rem;
-  color: var(--color-sumi);
-  font-family: "Klee One", "Noto Sans JP", sans-serif;
-  transition: all 0.15s;
-  font-size: 14px;
-}
-.form-input:focus {
-  border-style: solid;
-  border-color: var(--color-shu);
-  outline: none;
+  height: 1px;
 }

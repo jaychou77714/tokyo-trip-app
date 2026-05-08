@@ -1,14 +1,14 @@
 import React, { useState, useMemo } from 'react'
 import { Search, Heart, MapPin } from 'lucide-react'
-import { EditorialHeader, StampLabel, EmptyState } from '../Common'
+import { Button, Input, EditorialHeader, StampLabel, EmptyState } from '../Common'
 import { PLACES, getPlacesByCategory } from '../../data/places'
 import { CATEGORIES, AREAS } from '../../data/categories'
 import PlaceDetailModal from './PlaceDetailModal'
 import MapView from '../MapView'
 
 export default function PlacesScreen({ favorites, onToggleFavorite, onAddToTrip }) {
-  const [activeCategory, setActiveCategory] = useState(0)
-  const [filterMode, setFilterMode] = useState('area')
+  const [activeCategory, setActiveCategory] = useState(0) // 0=全部, 1-5=各類
+  const [filterMode, setFilterMode] = useState('area') // 'area' | 'type'
   const [activeFilter, setActiveFilter] = useState('全部')
   const [search, setSearch] = useState('')
   const [showFavOnly, setShowFavOnly] = useState(false)
@@ -46,17 +46,17 @@ export default function PlacesScreen({ favorites, onToggleFavorite, onAddToTrip 
   return (
     <div className="paper-bg min-h-screen pb-24">
       <div className="px-5 pt-12 pb-6 max-w-5xl mx-auto">
-        <EditorialHeader jp="名所案内" zh="Places & Food · 110 Spots" accent="02" tape="blue" />
+        <EditorialHeader jp="名所案内" zh="PLACES & FOOD · 110 SPOTS" accent="02" />
 
         {/* 5 大類別卡片 */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 mb-5">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-5">
           <CategoryCard
             active={activeCategory === 0}
             onClick={() => setActiveCategory(0)}
             emoji="✦"
             name="全部"
             count={PLACES.length}
-            color="#3D2817"
+            color="#1a1a1a"
           />
           {CATEGORIES.map(cat => (
             <CategoryCard
@@ -71,36 +71,32 @@ export default function PlacesScreen({ favorites, onToggleFavorite, onAddToTrip 
           ))}
         </div>
 
-        {/* 搜尋 + 篩選（紙片風格）*/}
-        <div className="paper-plain p-4 mb-5" style={{ border: '1.5px dashed #6B4423' }}>
-          <div className="flex items-center gap-2 mb-3 pb-2 border-b border-dashed border-gold">
-            <Search size={14} className="text-shu" />
+        {/* 搜尋 + 篩選 */}
+        <div className="bg-white/40 border border-sumi/10 p-4 mb-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Search size={14} className="text-usuzumi" />
             <input
               placeholder="搜尋景點、地址、類型..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 bg-transparent outline-none text-sm font-display"
+              className="flex-1 bg-transparent outline-none text-sm"
             />
             <button
               onClick={() => setShowFavOnly(!showFavOnly)}
-              className={`px-2 py-1 text-xs flex items-center gap-1 transition-all ${
-                showFavOnly ? 'bg-stamp text-kinari2' : 'text-usuzumi border border-dashed border-gold'
-              }`}
+              className={`px-2 py-1 text-xs flex items-center gap-1 ${showFavOnly ? 'bg-shu text-kinari' : 'text-usuzumi'}`}
             >
-              <Heart size={12} fill={showFavOnly ? '#FAF6EC' : 'none'} /> 收藏
+              <Heart size={12} fill={showFavOnly ? '#f5efe6' : 'none'} /> 收藏
             </button>
           </div>
 
           <div className="flex items-center gap-3 mb-2">
-            <span className="text-[10px] text-usuzumi tracking-wider uppercase font-mono">分類</span>
+            <span className="text-[10px] text-usuzumi tracking-wider uppercase">分類</span>
             <div className="flex gap-1">
               {['area', 'type'].map(m => (
                 <button
                   key={m}
                   onClick={() => { setFilterMode(m); setActiveFilter('全部') }}
-                  className={`text-xs px-2.5 py-1 transition-all ${
-                    filterMode === m ? 'bg-sumi text-kinari2' : 'text-usuzumi border border-dashed border-gold'
-                  }`}
+                  className={`text-xs px-2 py-1 ${filterMode === m ? 'bg-sumi text-kinari' : 'text-usuzumi border border-sumi/20'}`}
                 >
                   {m === 'area' ? '依地區' : '依類型'}
                 </button>
@@ -108,9 +104,7 @@ export default function PlacesScreen({ favorites, onToggleFavorite, onAddToTrip 
             </div>
             <button
               onClick={() => setShowMap(!showMap)}
-              className={`ml-auto text-xs px-2.5 py-1 flex items-center gap-1 transition-all ${
-                showMap ? 'bg-shu text-kinari2' : 'text-usuzumi border border-dashed border-gold'
-              }`}
+              className={`ml-auto text-xs px-2 py-1 flex items-center gap-1 ${showMap ? 'bg-shu text-kinari' : 'text-usuzumi border border-sumi/20'}`}
             >
               <MapPin size={11} /> 地圖
             </button>
@@ -121,10 +115,10 @@ export default function PlacesScreen({ favorites, onToggleFavorite, onAddToTrip 
               <button
                 key={opt}
                 onClick={() => setActiveFilter(opt)}
-                className={`text-[11px] px-2.5 py-1 transition-all font-display ${
+                className={`text-[11px] px-2.5 py-1 transition-colors ${
                   activeFilter === opt
-                    ? 'bg-sumi text-kinari2'
-                    : 'bg-kinari text-usuzumi hover:bg-kinari2 border border-dashed border-gold'
+                    ? 'bg-sumi text-kinari'
+                    : 'bg-white/60 text-usuzumi hover:bg-white border border-sumi/10'
                 }`}
               >
                 {opt}
@@ -133,13 +127,16 @@ export default function PlacesScreen({ favorites, onToggleFavorite, onAddToTrip 
           </div>
         </div>
 
+        {/* 地圖檢視 */}
         {showMap && (
-          <div className="mb-5" style={{ border: '1.5px solid #3D2817', boxShadow: '3px 3px 0 #3D2817' }}>
+          <div className="mb-5 border border-sumi/15">
             <MapView
               height="340px"
               markers={filtered.map(p => ({
-                id: p.id, lat: p.lat, lng: p.lng,
-                color: CATEGORIES.find(c => c.id === p.category)?.color || '#3D2817',
+                id: p.id,
+                lat: p.lat,
+                lng: p.lng,
+                color: CATEGORIES.find(c => c.id === p.category)?.color || '#1a1a1a',
                 popup: {
                   title: p.name_zh,
                   subtitle: p.type,
@@ -150,8 +147,9 @@ export default function PlacesScreen({ favorites, onToggleFavorite, onAddToTrip 
           </div>
         )}
 
+        {/* 結果 */}
         <div className="flex items-baseline justify-between mb-3">
-          <span className="text-xs text-usuzumi tracking-wider uppercase font-mono">★ {filtered.length} 筆結果 ★</span>
+          <span className="text-xs text-usuzumi tracking-wider uppercase">{filtered.length} 筆結果</span>
         </div>
 
         {filtered.length === 0 ? (
@@ -187,16 +185,16 @@ function CategoryCard({ active, onClick, emoji, name, count, color }) {
   return (
     <button
       onClick={onClick}
-      className="p-3 transition-all text-left relative paper-plain"
-      style={{
-        border: active ? `2px solid ${color}` : '1.5px dashed #D4B896',
-        boxShadow: active ? `3px 3px 0 ${color}` : 'none',
-      }}
+      className={`p-3 border transition-all text-left ${
+        active
+          ? 'border-shu bg-white shadow-md'
+          : 'border-sumi/10 bg-white/40 hover:bg-white/70'
+      }`}
     >
       <div className="flex items-baseline gap-2">
         <span className="text-2xl" style={{ color }}>{emoji}</span>
         <div className="flex-1">
-          <div className="font-display font-semibold text-sm">{name}</div>
+          <div className="font-display text-sm">{name}</div>
           <div className="text-[10px] text-usuzumi font-mono">{count} spots</div>
         </div>
       </div>
@@ -209,19 +207,13 @@ function PlaceCard({ place, isFavorite, onClick, onToggleFavorite }) {
   return (
     <div
       onClick={onClick}
-      className="paper-plain p-4 cursor-pointer relative transition-all"
-      style={{
-        border: '1.5px solid #3D2817',
-        boxShadow: '3px 3px 0 #3D2817',
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = `4px 4px 0 ${cat?.color || '#3D2817'}`; e.currentTarget.style.transform = 'translate(-1px, -1px)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '3px 3px 0 #3D2817'; e.currentTarget.style.transform = 'translate(0, 0)' }}
+      className="bg-white/50 hover:bg-white/80 border border-sumi/10 p-4 transition-all cursor-pointer card-shadow hover:card-shadow-hover relative"
     >
       <button
         onClick={onToggleFavorite}
-        className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center hover:scale-110 transition-transform z-10"
+        className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center hover:bg-sumi/5 rounded-full"
       >
-        <Heart size={16} fill={isFavorite ? '#E84E4E' : 'none'} stroke={isFavorite ? '#E84E4E' : '#6B4423'} strokeWidth={2} />
+        <Heart size={14} fill={isFavorite ? '#c9302c' : 'none'} stroke={isFavorite ? '#c9302c' : '#5a5a5a'} />
       </button>
 
       <div className="flex items-center gap-2 mb-2">
@@ -231,32 +223,29 @@ function PlaceCard({ place, isFavorite, onClick, onToggleFavorite }) {
       <h3 className="editorial-title text-base mb-0.5">{place.name_zh}</h3>
       <p className="font-display text-xs text-usuzumi mb-2">{place.name_jp}</p>
 
-      <div className="space-y-1 text-[11px] text-sumi/75 font-display">
+      <div className="space-y-1 text-[11px] text-sumi/70">
         <div className="flex gap-1.5">
-          <span className="text-shu">◎</span>
+          <span className="text-usuzumi">◎</span>
           <span>{place.area} · {place.type}</span>
         </div>
         {place.hours && (
           <div className="flex gap-1.5">
-            <span className="text-shu">⌚</span>
+            <span className="text-usuzumi">⌚</span>
             <span className="line-clamp-1">{place.hours}</span>
           </div>
         )}
         {place.price && (
           <div className="flex gap-1.5">
-            <span className="text-shu font-bold">¥</span>
+            <span className="text-usuzumi">¥</span>
             <span>{place.price}</span>
           </div>
         )}
       </div>
 
       {place.tags?.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t border-dashed border-gold">
+        <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t border-sumi/10">
           {place.tags.slice(0, 3).map(t => (
-            <span key={t} className="text-[10px] text-usuzumi font-display"
-              style={{ background: '#FAF6EC', border: '1px dashed #D4B896', padding: '2px 6px' }}>
-              {t}
-            </span>
+            <span key={t} className="text-[10px] text-usuzumi bg-sumi/5 px-1.5 py-0.5">{t}</span>
           ))}
         </div>
       )}

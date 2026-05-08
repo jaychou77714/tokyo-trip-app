@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Map, Compass, Train, Wallet, User as UserIcon } from 'lucide-react'
+import { Map, Compass, Train, Wallet, User as UserIcon, Wrench } from 'lucide-react'
 import { Toast } from './components/Common'
 import LoginScreen from './components/screens/LoginScreen'
 import HomeScreen from './components/screens/HomeScreen'
@@ -9,11 +9,15 @@ import StationsScreen from './components/screens/StationsScreen'
 import BudgetScreen from './components/screens/BudgetScreen'
 import ProfileScreen from './components/screens/ProfileScreen'
 import PlaceDetailModal from './components/screens/PlaceDetailModal'
+import ToolsScreen from './components/screens/ToolsScreen'
+import ChecklistScreen from './components/screens/ChecklistScreen'
+import JrPassScreen from './components/screens/JrPassScreen'
 import { getUser, clearUser, listTrips, listFavorites, toggleFavorite, saveItineraryItem } from './lib/storage'
 
 export default function App() {
   const [user, setUser] = useState(null)
   const [view, setView] = useState('home')
+  const [toolView, setToolView] = useState(null) // null | 'checklist' | 'jrpass'
   const [selectedTrip, setSelectedTrip] = useState(null)
   const [trips, setTrips] = useState([])
   const [favorites, setFavorites] = useState([])
@@ -44,7 +48,7 @@ export default function App() {
   function handleLogout() {
     clearUser()
     setUser(null); setSelectedTrip(null); setTrips([]); setFavorites([])
-    setView('home')
+    setView('home'); setToolView(null)
   }
 
   async function handleToggleFavorite(placeId) {
@@ -70,8 +74,14 @@ export default function App() {
     setView('trip')
   }
 
+  function handleSwitchView(newView) {
+    setView(newView)
+    setToolView(null) // 切換主 tab 時，重置工具子頁
+  }
+
+  // 切到 budget 時更新 trips
   useEffect(() => {
-    if (user && view === 'budget') listTrips(user.id).then(setTrips)
+    if (user && (view === 'budget' || view === 'tools')) listTrips(user.id).then(setTrips)
   }, [view])
 
   if (!user) return <LoginScreen onLogin={handleLogin} />
@@ -105,6 +115,23 @@ export default function App() {
           showToast={showToast}
         />
       )}
+      {view === 'tools' && !toolView && (
+        <ToolsScreen onNavigate={(toolId) => setToolView(toolId)} />
+      )}
+      {view === 'tools' && toolView === 'checklist' && (
+        <ChecklistScreen
+          trips={trips}
+          onBack={() => setToolView(null)}
+          showToast={showToast}
+        />
+      )}
+      {view === 'tools' && toolView === 'jrpass' && (
+        <JrPassScreen
+          trips={trips}
+          onBack={() => setToolView(null)}
+          showToast={showToast}
+        />
+      )}
       {view === 'profile' && (
         <ProfileScreen
           user={user}
@@ -123,7 +150,7 @@ export default function App() {
         onAddToTrip={selectedTrip ? (p) => { handleAddPlaceToTrip(p); setGlobalPlaceModal(null) } : null}
       />
 
-      <TabBar view={view} onChange={setView} />
+      <TabBar view={view} onChange={handleSwitchView} />
     </div>
   )
 }
@@ -134,6 +161,7 @@ function TabBar({ view, onChange }) {
     { id: 'places', label: '景點', jp: '名所', icon: Compass },
     { id: 'stations', label: '站點', jp: '駅', icon: Train },
     { id: 'budget', label: '預算', jp: '会計', icon: Wallet },
+    { id: 'tools', label: '工具', jp: '道具', icon: Wrench },
     { id: 'profile', label: '我的', jp: '私', icon: UserIcon },
   ]
   const displayView = view === 'trip' ? 'home' : view
@@ -148,7 +176,7 @@ function TabBar({ view, onChange }) {
       }}
     >
       <div className="max-w-3xl mx-auto flex relative">
-        {tabs.map((t, idx) => {
+        {tabs.map((t) => {
           const Icon = t.icon
           const active = displayView === t.id
           return (
@@ -159,16 +187,15 @@ function TabBar({ view, onChange }) {
                 active ? 'text-shu' : 'text-usuzumi hover:text-sumi'
               }`}
             >
-              {/* 上方紙膠帶（active 才顯示）*/}
               {active && (
                 <div
-                  className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-1.5"
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1.5"
                   style={{ background: '#FF8B5A' }}
                 />
               )}
-              <Icon size={18} strokeWidth={active ? 2.5 : 1.8} />
-              <span className="text-[11px] font-display font-semibold tracking-wider">{t.jp}</span>
-              <span className="text-[9px] tracking-wider opacity-70">{t.label}</span>
+              <Icon size={17} strokeWidth={active ? 2.5 : 1.8} />
+              <span className="text-[10px] font-display font-semibold tracking-wider">{t.jp}</span>
+              <span className="text-[8.5px] tracking-wider opacity-70">{t.label}</span>
             </button>
           )
         })}

@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Calendar, Trash2, Edit3 } from 'lucide-react'
-import { Button, Modal, Input, EmptyState, EditorialHeader, ConfirmDialog, WashiTape } from '../Common'
+import { Plus, MapPin, Calendar, Trash2, Edit3 } from 'lucide-react'
+import { Button, Modal, Input, EmptyState, EditorialHeader, ConfirmDialog } from '../Common'
 import { listTrips, saveTrip, deleteTrip } from '../../lib/storage'
 import dayjs from 'dayjs'
-
-const TRIP_TAPE_COLORS = ['shu', 'blue', 'green', 'yellow']
 
 export default function HomeScreen({ user, onSelectTrip, showToast }) {
   const [trips, setTrips] = useState([])
   const [loading, setLoading] = useState(true)
-  const [editing, setEditing] = useState(null)
+  const [editing, setEditing] = useState(null) // null=未開, {}=新增, {trip}=編輯
   const [confirmDelete, setConfirmDelete] = useState(null)
 
   useEffect(() => { load() }, [user])
@@ -29,7 +27,7 @@ export default function HomeScreen({ user, onSelectTrip, showToast }) {
     const trip = { ...editing, ...form, days }
     await saveTrip(trip, user.id)
     setEditing(null)
-    showToast(editing?.id ? '✓ 已更新' : '✿ 行程建立完成', 'success')
+    showToast(editing?.id ? '已更新' : '行程建立完成', 'success')
     load()
   }
 
@@ -43,18 +41,15 @@ export default function HomeScreen({ user, onSelectTrip, showToast }) {
   return (
     <div className="paper-bg min-h-screen pb-24">
       <div className="px-5 pt-12 pb-6 max-w-3xl mx-auto">
-        {/* 招呼語 */}
         <div className="flex items-baseline justify-between mb-2">
-          <span className="font-display text-shu text-xs tracking-[0.3em]">こんにちは ♡</span>
+          <span className="font-display text-shu text-xs tracking-[0.3em]">こんにちは</span>
           <span className="text-xs text-usuzumi font-mono">{dayjs().format('YYYY.MM.DD')}</span>
         </div>
-        <h1 className="editorial-title text-3xl mb-1">
-          {user.nickname} <span className="text-usuzumi text-base font-normal">さん</span>
-        </h1>
-        <p className="text-xs text-usuzumi tracking-[0.2em] uppercase font-mono">★ Welcome Back ★</p>
+        <h1 className="editorial-title text-3xl mb-1">{user.nickname} さん</h1>
+        <p className="text-xs text-usuzumi tracking-[0.2em] uppercase">Welcome Back</p>
 
         <div className="mt-10">
-          <EditorialHeader jp="旅の計画" zh="My Trips" accent="01" tape="shu" />
+          <EditorialHeader jp="旅の計画" zh="MY TRIPS" accent="01" />
 
           {loading ? (
             <div className="text-center py-12 text-usuzumi text-sm">読み込み中...</div>
@@ -66,12 +61,11 @@ export default function HomeScreen({ user, onSelectTrip, showToast }) {
               action={<Button variant="shu" onClick={() => setEditing({})}><Plus size={16} /> 建立新行程</Button>}
             />
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 mt-4">
-              {trips.map((trip, idx) => (
+            <div className="grid gap-3 md:grid-cols-2">
+              {trips.map(trip => (
                 <TripCard
                   key={trip.id}
                   trip={trip}
-                  tapeColor={TRIP_TAPE_COLORS[idx % TRIP_TAPE_COLORS.length]}
                   onClick={() => onSelectTrip(trip)}
                   onEdit={() => setEditing(trip)}
                   onDelete={() => setConfirmDelete(trip)}
@@ -79,16 +73,17 @@ export default function HomeScreen({ user, onSelectTrip, showToast }) {
               ))}
               <button
                 onClick={() => setEditing({})}
-                className="border-2 border-dashed border-gold hover:border-shu hover:text-shu p-6 transition-all flex flex-col items-center justify-center min-h-[150px] text-usuzumi paper-plain group"
+                className="border-2 border-dashed border-sumi/20 hover:border-shu hover:text-shu p-6 transition-colors flex flex-col items-center justify-center min-h-[140px] text-usuzumi"
               >
-                <Plus size={28} className="mb-1 group-hover:rotate-90 transition-transform" />
-                <span className="text-sm font-display tracking-wider">新しい旅 / 新增行程</span>
+                <Plus size={24} className="mb-1" />
+                <span className="text-sm font-display">新しい旅 / 新增行程</span>
               </button>
             </div>
           )}
         </div>
       </div>
 
+      {/* 編輯/新增 modal */}
       <TripEditModal
         open={editing !== null}
         trip={editing}
@@ -109,69 +104,37 @@ export default function HomeScreen({ user, onSelectTrip, showToast }) {
   )
 }
 
-function TripCard({ trip, tapeColor, onClick, onEdit, onDelete }) {
+function TripCard({ trip, onClick, onEdit, onDelete }) {
   const days = trip.days || (trip.start_date && trip.end_date
     ? dayjs(trip.end_date).diff(dayjs(trip.start_date), 'day') + 1 : 1)
-  const tapeBg = {
-    shu: '#FF8B5A',
-    blue: '#A8C5D9',
-    green: '#7FA468',
-    yellow: '#F0B450',
-  }[tapeColor]
   return (
-    <div
-      className="group relative paper-plain p-5 transition-all"
-      style={{
-        border: '1.5px solid #3D2817',
-        boxShadow: '3px 3px 0 #3D2817',
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '5px 5px 0 #3D2817'; e.currentTarget.style.transform = 'translate(-1px, -1px)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '3px 3px 0 #3D2817'; e.currentTarget.style.transform = 'translate(0, 0)' }}
-    >
-      {/* 角落紙膠帶 */}
-      <div
-        className="absolute -top-2 left-4 w-16 h-4 opacity-90"
-        style={{
-          background: tapeBg,
-          backgroundImage: 'linear-gradient(180deg, transparent 47%, rgba(255,255,255,0.4) 47%, rgba(255,255,255,0.4) 53%, transparent 53%)',
-          transform: 'rotate(-2deg)',
-        }}
-      />
-
-      <div onClick={onClick} className="cursor-pointer pt-2">
+    <div className="group bg-white/50 hover:bg-white/70 border border-sumi/10 hover:border-sumi/30 transition-all card-shadow hover:card-shadow-hover">
+      <div onClick={onClick} className="cursor-pointer p-5">
         <div className="flex items-start justify-between mb-3">
-          <div className="flex-1 min-w-0">
-            <h3 className="editorial-title text-xl mb-1 truncate">{trip.title}</h3>
+          <div>
+            <h3 className="editorial-title text-xl mb-0.5">{trip.title}</h3>
             <div className="flex items-center gap-1.5 text-xs text-usuzumi">
-              <Calendar size={11} />
+              <Calendar size={12} />
               {trip.start_date ? (
-                <span className="font-mono">{dayjs(trip.start_date).format('M/D')} – {dayjs(trip.end_date).format('M/D')}</span>
+                <span>{dayjs(trip.start_date).format('M/D')} – {dayjs(trip.end_date).format('M/D')}</span>
               ) : (
                 <span>未指定日期</span>
               )}
               <span>·</span>
-              <span className="font-mono">{days} 日</span>
+              <span>{days} 日</span>
             </div>
           </div>
-          <div
-            className="w-10 h-10 rounded-full flex flex-col items-center justify-center flex-shrink-0 ml-2 text-[8px] font-display font-bold"
-            style={{ border: '1.5px solid #E84E4E', color: '#E84E4E', background: 'rgba(250,246,236,0.6)', transform: 'rotate(-8deg)' }}
-          >
-            <span>TRIP</span>
-            <span>{String(days).padStart(2, '0')}D</span>
-          </div>
+          <span className="text-shu font-display text-xs tracking-widest">TRIP</span>
         </div>
         {trip.notes && (
-          <p className="text-xs text-sumi/75 mt-2 line-clamp-2 italic font-display">{trip.notes}</p>
+          <p className="text-xs text-sumi/70 mt-2 line-clamp-2">{trip.notes}</p>
         )}
       </div>
-
-      <div className="flex border-t-2 border-dashed border-gold mt-3 pt-2 -mx-5 px-5 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button onClick={onEdit} className="flex-1 py-1 text-xs text-usuzumi hover:text-sumi flex items-center justify-center gap-1">
+      <div className="flex border-t border-sumi/10 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button onClick={onEdit} className="flex-1 py-2 text-xs text-usuzumi hover:bg-sumi/5 flex items-center justify-center gap-1">
           <Edit3 size={11} /> 編輯
         </button>
-        <span className="text-gold">|</span>
-        <button onClick={onDelete} className="flex-1 py-1 text-xs text-stamp hover:text-stamp/80 flex items-center justify-center gap-1">
+        <button onClick={onDelete} className="flex-1 py-2 text-xs text-shu hover:bg-shu/5 flex items-center justify-center gap-1 border-l border-sumi/10">
           <Trash2 size={11} /> 刪除
         </button>
       </div>
@@ -205,12 +168,12 @@ function TripEditModal({ open, trip, onClose, onSave }) {
         <Input label="天數（未填日期時用此）" type="number" min="1" max="30"
           value={form.days || ''} onChange={(e) => setForm({ ...form, days: parseInt(e.target.value) || 1 })} />
         <div>
-          <span className="block text-xs font-display font-semibold text-usuzumi mb-1.5 tracking-wider">✎ 備註</span>
+          <span className="block text-xs font-medium text-usuzumi mb-1.5 tracking-wider">備註</span>
           <textarea rows={3}
             placeholder="同行成員、住宿、目的⋯"
             value={form.notes || ''}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            className="w-full form-input resize-none"
+            className="w-full px-3.5 py-2.5 bg-white/60 border border-sumi/15 focus:border-shu focus:outline-none text-sm transition-colors resize-none"
           />
         </div>
         <div className="flex gap-2 justify-end pt-2">

@@ -1,44 +1,33 @@
 import { supabase, hasSupabase } from './supabase'
 
-// localStorage key
 const LS_PREFIX = 'tokyo_trip_'
 
-// 暱稱 / 使用者
 export function getUser() {
   const raw = localStorage.getItem(`${LS_PREFIX}user`)
   return raw ? JSON.parse(raw) : null
 }
-
 export function setUser(user) {
   localStorage.setItem(`${LS_PREFIX}user`, JSON.stringify(user))
 }
-
 export function clearUser() {
   localStorage.removeItem(`${LS_PREFIX}user`)
 }
 
-// 通用本地存取
 function localGet(key, defaultValue) {
   try {
     const raw = localStorage.getItem(`${LS_PREFIX}${key}`)
     return raw ? JSON.parse(raw) : defaultValue
-  } catch {
-    return defaultValue
-  }
+  } catch { return defaultValue }
 }
-
 function localSet(key, value) {
   localStorage.setItem(`${LS_PREFIX}${key}`, JSON.stringify(value))
 }
 
-// ===== 行程 trips =====
+// ===== 行程 =====
 export async function listTrips(userId) {
   if (hasSupabase && userId) {
     const { data, error } = await supabase
-      .from('trips')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
+      .from('trips').select('*').eq('user_id', userId).order('created_at', { ascending: false })
     if (!error && data) return data
   }
   return localGet(`trips_${userId}`, [])
@@ -66,7 +55,6 @@ export async function saveTrip(trip, userId) {
       }
     }
   }
-  // 本地後備
   const trips = localGet(`trips_${userId}`, [])
   if (tripData.id) {
     const idx = trips.findIndex(t => t.id === tripData.id)
@@ -88,19 +76,12 @@ export async function deleteTrip(tripId, userId) {
   localSet(`trips_${userId}`, trips)
 }
 
-// ===== 行程項目 itinerary_items =====
+// ===== 行程項目 =====
 export async function listItinerary(tripId) {
   if (hasSupabase && !tripId.startsWith('local-')) {
-    const { data } = await supabase
-      .from('itinerary_items')
-      .select('*')
-      .eq('trip_id', tripId)
-      .order('day_number', { ascending: true })
-      .order('order_index', { ascending: true })
-    if (data) {
-      localSet(`itinerary_${tripId}`, data)
-      return data
-    }
+    const { data } = await supabase.from('itinerary_items').select('*').eq('trip_id', tripId)
+      .order('day_number').order('order_index')
+    if (data) { localSet(`itinerary_${tripId}`, data); return data }
   }
   return localGet(`itinerary_${tripId}`, [])
 }
@@ -128,7 +109,6 @@ export async function saveItineraryItem(item, tripId) {
       }
     }
   }
-  // 本地後備
   const items = localGet(`itinerary_${tripId}`, [])
   if (itemData.id) {
     const idx = items.findIndex(i => i.id === itemData.id)
@@ -149,14 +129,11 @@ export async function deleteItineraryItem(itemId, tripId) {
   localSet(`itinerary_${tripId}`, items)
 }
 
-// ===== 收藏 favorites =====
+// ===== 收藏 =====
 export async function listFavorites(userId) {
   if (hasSupabase && userId) {
     const { data } = await supabase.from('favorites').select('*').eq('user_id', userId)
-    if (data) {
-      localSet(`favs_${userId}`, data)
-      return data
-    }
+    if (data) { localSet(`favs_${userId}`, data); return data }
   }
   return localGet(`favs_${userId}`, [])
 }
@@ -173,11 +150,7 @@ export async function toggleFavorite(placeId, userId) {
     const newFav = { user_id: userId, place_id: placeId, created_at: new Date().toISOString() }
     if (hasSupabase) {
       const { data } = await supabase.from('favorites').insert(newFav).select().single()
-      if (data) {
-        current.push(data)
-        localSet(`favs_${userId}`, current)
-        return true
-      }
+      if (data) { current.push(data); localSet(`favs_${userId}`, current); return true }
     }
     current.push({ ...newFav, id: `local-${Date.now()}` })
     localSet(`favs_${userId}`, current)
@@ -185,18 +158,11 @@ export async function toggleFavorite(placeId, userId) {
   }
 }
 
-// ===== 花費 expenses =====
+// ===== 花費 =====
 export async function listExpenses(tripId) {
   if (hasSupabase && !tripId.startsWith('local-')) {
-    const { data } = await supabase
-      .from('expenses')
-      .select('*')
-      .eq('trip_id', tripId)
-      .order('date', { ascending: false })
-    if (data) {
-      localSet(`expenses_${tripId}`, data)
-      return data
-    }
+    const { data } = await supabase.from('expenses').select('*').eq('trip_id', tripId).order('date', { ascending: false })
+    if (data) { localSet(`expenses_${tripId}`, data); return data }
   }
   return localGet(`expenses_${tripId}`, [])
 }
@@ -245,14 +211,11 @@ export async function deleteExpense(expenseId, tripId) {
   localSet(`expenses_${tripId}`, list)
 }
 
-// ===== 退稅紀錄 tax_free_items =====
+// ===== 退稅 =====
 export async function listTaxFree(tripId) {
   if (hasSupabase && !tripId.startsWith('local-')) {
     const { data } = await supabase.from('tax_free_items').select('*').eq('trip_id', tripId).order('date', { ascending: false })
-    if (data) {
-      localSet(`taxfree_${tripId}`, data)
-      return data
-    }
+    if (data) { localSet(`taxfree_${tripId}`, data); return data }
   }
   return localGet(`taxfree_${tripId}`, [])
 }
@@ -302,21 +265,14 @@ export async function deleteTaxFree(id, tripId) {
 }
 
 // ===== IC 卡 =====
-export function getICCards(userId) {
-  return localGet(`ic_${userId}`, [])
-}
-export function saveICCards(userId, cards) {
-  localSet(`ic_${userId}`, cards)
-}
+export function getICCards(userId) { return localGet(`ic_${userId}`, []) }
+export function saveICCards(userId, cards) { localSet(`ic_${userId}`, cards) }
 
 // ===== 自訂景點 =====
 export async function listCustomPlaces(userId) {
   if (hasSupabase && userId) {
     const { data } = await supabase.from('custom_places').select('*').eq('user_id', userId)
-    if (data) {
-      localSet(`custom_${userId}`, data)
-      return data
-    }
+    if (data) { localSet(`custom_${userId}`, data); return data }
   }
   return localGet(`custom_${userId}`, [])
 }
@@ -332,8 +288,7 @@ export async function saveCustomPlace(place, userId) {
       const { data: res } = await supabase.from('custom_places').insert(data).select().single()
       if (res) {
         const list = localGet(`custom_${userId}`, [])
-        list.push(res)
-        localSet(`custom_${userId}`, list)
+        list.push(res); localSet(`custom_${userId}`, list)
         return res
       }
     }
@@ -352,4 +307,76 @@ export async function deleteCustomPlace(id, userId) {
   }
   const list = localGet(`custom_${userId}`, []).filter(p => p.id !== id)
   localSet(`custom_${userId}`, list)
+}
+
+// ============================================
+// ===== v1.2 新增：行前 Checklist =====
+// ============================================
+export async function listChecklist(tripId) {
+  if (hasSupabase && !tripId.startsWith('local-')) {
+    const { data } = await supabase.from('checklist_items').select('*').eq('trip_id', tripId).order('sort_order')
+    if (data) { localSet(`checklist_${tripId}`, data); return data }
+  }
+  return localGet(`checklist_${tripId}`, [])
+}
+
+export async function saveChecklistItem(item, tripId) {
+  const data = { ...item, trip_id: tripId }
+  if (hasSupabase && !tripId.startsWith('local-')) {
+    if (data.id && !data.id.startsWith('local-')) {
+      const { data: res } = await supabase.from('checklist_items').update(data).eq('id', data.id).select().single()
+      if (res) {
+        const list = localGet(`checklist_${tripId}`, [])
+        const idx = list.findIndex(i => i.id === res.id)
+        if (idx >= 0) list[idx] = res; else list.push(res)
+        localSet(`checklist_${tripId}`, list)
+        return res
+      }
+    } else {
+      delete data.id
+      const { data: res } = await supabase.from('checklist_items').insert(data).select().single()
+      if (res) {
+        const list = localGet(`checklist_${tripId}`, [])
+        list.push(res); localSet(`checklist_${tripId}`, list)
+        return res
+      }
+    }
+  }
+  const list = localGet(`checklist_${tripId}`, [])
+  if (!data.id) data.id = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  const idx = list.findIndex(i => i.id === data.id)
+  if (idx >= 0) list[idx] = data; else list.push(data)
+  localSet(`checklist_${tripId}`, list)
+  return data
+}
+
+export async function deleteChecklistItem(id, tripId) {
+  if (hasSupabase && !id.startsWith('local-')) {
+    await supabase.from('checklist_items').delete().eq('id', id)
+  }
+  const list = localGet(`checklist_${tripId}`, []).filter(i => i.id !== id)
+  localSet(`checklist_${tripId}`, list)
+}
+
+export async function bulkInsertChecklist(items, tripId) {
+  if (hasSupabase && !tripId.startsWith('local-')) {
+    const { data } = await supabase.from('checklist_items').insert(items).select()
+    if (data) {
+      localSet(`checklist_${tripId}`, data)
+      return data
+    }
+  }
+  const enriched = items.map(item => ({
+    ...item,
+    id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${item.sort_order}`,
+  }))
+  localSet(`checklist_${tripId}`, enriched)
+  return enriched
+}
+
+export async function clearChecklist(tripId) {
+  if (hasSupabase && !tripId.startsWith('local-')) {
+    await supabase.from('checklist_items').delete().eq('trip_id', tripId)
+  }
+  localSet(`checklist_${tripId}`, [])
 }
