@@ -1,0 +1,164 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-sumi: #1a1a1a;
+  --color-kinari: #f5efe6;
+  --color-shu: #c9302c;
+  --color-usuzumi: #5a5a5a;
+  --color-gold: #b8945f;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-kinari);
+  color: var(--color-sumi);
+  font-family: "Noto Sans JP", "Source Han Sans TC", -apple-system, sans-serif;
+  font-feature-settings: "palt";
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* 紙張紋理背景 */
+.paper-bg {
+  background-color: #f5efe6;
+  background-image:
+    radial-gradient(at 20% 30%, rgba(184, 148, 95, 0.04) 0px, transparent 50%),
+    radial-gradient(at 80% 70%, rgba(201, 48, 44, 0.03) 0px, transparent 50%);
+}
+
+/* 印章效果 */
+.stamp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-shu);
+  color: var(--color-shu);
+  font-family: "Noto Serif JP", serif;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  transform: rotate(-3deg);
+  padding: 0.25rem 0.5rem;
+}
+
+/* 編輯雜誌標題 */
+.editorial-title {
+  font-family: "Noto Serif JP", "Source Han Serif TC", serif;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+}
+
+/* 縱書效果（用於小細節） */
+.vertical-rl {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+}
+
+/* 卡片懸浮陰影 */
+.card-shadow {
+  box-shadow: 0 1px 3px rgba(26, 26, 26, 0.06), 0 4px 16px rgba(26, 26, 26, 0.08);
+}
+
+.card-shadow-hover {
+  box-shadow: 0 4px 12px rgba(26, 26, 26, 0.1), 0 8px 32px rgba(26, 26, 26, 0.12);
+}
+
+/* 滾動條 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(26, 26, 26, 0.2);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(26, 26, 26, 0.4);
+}
+
+/* Leaflet 樣式覆寫 */
+.leaflet-container {
+  font-family: "Noto Sans JP", sans-serif;
+  background: #ebe3d4;
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 4px;
+  background: #1a1a1a;
+  color: #f5efe6;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+.leaflet-popup-tip {
+  background: #1a1a1a;
+}
+.leaflet-popup-content {
+  margin: 12px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.leaflet-control-attribution {
+  background: rgba(245, 239, 230, 0.8) !important;
+  font-size: 9px !important;
+}
+
+/* 動畫 */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+.animate-shake {
+  animation: shake 0.3s ease-in-out;
+}
+
+/* 自訂 marker pin */
+.custom-pin {
+  background: transparent;
+  border: none;
+}
+
+/* 隱藏 number input 箭頭 */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* 按鈕焦點 */
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--color-shu);
+  outline-offset: 2px;
+}
+
+/* 印刷紋路裝飾線 */
+.deco-line {
+  background-image: linear-gradient(to right, currentColor 50%, transparent 50%);
+  background-size: 8px 1px;
+  background-repeat: repeat-x;
+  background-position: bottom;
+  height: 1px;
+}
