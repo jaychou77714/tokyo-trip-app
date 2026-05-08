@@ -13,7 +13,7 @@ import { getUser, clearUser, listTrips, listFavorites, toggleFavorite, saveItine
 
 export default function App() {
   const [user, setUser] = useState(null)
-  const [view, setView] = useState('home') // home | trip | places | stations | budget | profile
+  const [view, setView] = useState('home')
   const [selectedTrip, setSelectedTrip] = useState(null)
   const [trips, setTrips] = useState([])
   const [favorites, setFavorites] = useState([])
@@ -21,19 +21,14 @@ export default function App() {
   const [toast, setToast] = useState({ message: '', type: 'info' })
   const [globalPlaceModal, setGlobalPlaceModal] = useState(null)
 
-  // 初始化：從 localStorage 載入暱稱
   useEffect(() => {
     const u = getUser()
-    if (u) {
-      setUser(u)
-      loadUserData(u)
-    }
+    if (u) { setUser(u); loadUserData(u) }
   }, [])
 
   async function loadUserData(u) {
     const [t, f] = await Promise.all([listTrips(u.id), listFavorites(u.id)])
-    setTrips(t)
-    setFavorites(f)
+    setTrips(t); setFavorites(f)
   }
 
   function showToast(message, type = 'info') {
@@ -43,15 +38,12 @@ export default function App() {
   function handleLogin(u) {
     setUser(u)
     loadUserData(u)
-    showToast(`歡迎，${u.nickname}!`, 'success')
+    showToast(`歡迎回來，${u.nickname}！`, 'success')
   }
 
   function handleLogout() {
     clearUser()
-    setUser(null)
-    setSelectedTrip(null)
-    setTrips([])
-    setFavorites([])
+    setUser(null); setSelectedTrip(null); setTrips([]); setFavorites([])
     setView('home')
   }
 
@@ -59,51 +51,36 @@ export default function App() {
     const isNow = await toggleFavorite(placeId, user.id)
     const f = await listFavorites(user.id)
     setFavorites(f)
-    showToast(isNow ? '已加入收藏' : '已移除收藏', 'success')
+    showToast(isNow ? '★ 已加入收藏' : '☆ 已移除收藏', 'success')
   }
 
   function handleSelectTrip(trip) {
-    setSelectedTrip(trip)
-    setView('trip')
+    setSelectedTrip(trip); setView('trip')
   }
 
-  // 從景點頁加入行程
   async function handleAddPlaceToTrip(place) {
     if (!selectedTrip) {
-      // 沒選行程就建立 - 引導去首頁
-      showToast('請先在首頁建立或選擇行程', 'error')
-      setView('home')
-      return
+      showToast('請先建立或選擇行程', 'error')
+      setView('home'); return
     }
-    // 加入到行程的 day 1
     await saveItineraryItem({
-      place_id: place.id,
-      day_number: 1,
-      order_index: 999,
-      duration_min: 60,
+      place_id: place.id, day_number: 1, order_index: 999, duration_min: 60,
     }, selectedTrip.id)
-    showToast(`已加入「${selectedTrip.title}」Day 1`, 'success')
+    showToast(`✿ 已加入「${selectedTrip.title}」`, 'success')
     setView('trip')
   }
 
-  // 重新整理 trips（從 budget 切換時可能需要）
   useEffect(() => {
-    if (user && view === 'budget') {
-      listTrips(user.id).then(setTrips)
-    }
+    if (user && view === 'budget') listTrips(user.id).then(setTrips)
   }, [view])
 
   if (!user) return <LoginScreen onLogin={handleLogin} />
 
   return (
     <div className="min-h-screen">
-      {/* Toast */}
       <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: 'info' })} />
 
-      {/* 主內容 */}
-      {view === 'home' && (
-        <HomeScreen user={user} onSelectTrip={handleSelectTrip} showToast={showToast} />
-      )}
+      {view === 'home' && <HomeScreen user={user} onSelectTrip={handleSelectTrip} showToast={showToast} />}
       {view === 'trip' && selectedTrip && (
         <TripDetailScreen
           trip={selectedTrip}
@@ -119,9 +96,7 @@ export default function App() {
           onAddToTrip={selectedTrip ? handleAddPlaceToTrip : null}
         />
       )}
-      {view === 'stations' && (
-        <StationsScreen onSelectPlace={setGlobalPlaceModal} />
-      )}
+      {view === 'stations' && <StationsScreen onSelectPlace={setGlobalPlaceModal} />}
       {view === 'budget' && (
         <BudgetScreen
           trips={trips}
@@ -139,7 +114,6 @@ export default function App() {
         />
       )}
 
-      {/* 共用景點詳情 */}
       <PlaceDetailModal
         open={!!globalPlaceModal}
         place={globalPlaceModal}
@@ -149,13 +123,12 @@ export default function App() {
         onAddToTrip={selectedTrip ? (p) => { handleAddPlaceToTrip(p); setGlobalPlaceModal(null) } : null}
       />
 
-      {/* TabBar */}
-      <TabBar view={view} onChange={setView} hasTrip={!!selectedTrip} />
+      <TabBar view={view} onChange={setView} />
     </div>
   )
 }
 
-function TabBar({ view, onChange, hasTrip }) {
+function TabBar({ view, onChange }) {
   const tabs = [
     { id: 'home', label: '行程', jp: '旅', icon: Map },
     { id: 'places', label: '景點', jp: '名所', icon: Compass },
@@ -163,28 +136,39 @@ function TabBar({ view, onChange, hasTrip }) {
     { id: 'budget', label: '預算', jp: '会計', icon: Wallet },
     { id: 'profile', label: '我的', jp: '私', icon: UserIcon },
   ]
-
-  // 如果在 trip detail 內，把 home 切回 home 而不是 trip
   const displayView = view === 'trip' ? 'home' : view
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-kinari border-t border-sumi/15 backdrop-blur-md">
-      <div className="max-w-3xl mx-auto flex">
-        {tabs.map(t => {
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50"
+      style={{
+        background: '#FFFCF5',
+        borderTop: '2px solid #3D2817',
+        boxShadow: '0 -2px 0 rgba(212, 184, 150, 0.4), 0 -8px 20px rgba(61, 40, 23, 0.05)',
+      }}
+    >
+      <div className="max-w-3xl mx-auto flex relative">
+        {tabs.map((t, idx) => {
           const Icon = t.icon
           const active = displayView === t.id
           return (
             <button
               key={t.id}
               onClick={() => onChange(t.id)}
-              className={`flex-1 py-2 flex flex-col items-center gap-0.5 transition-colors ${
+              className={`flex-1 py-2.5 flex flex-col items-center gap-0.5 transition-all relative ${
                 active ? 'text-shu' : 'text-usuzumi hover:text-sumi'
               }`}
             >
-              <Icon size={18} strokeWidth={active ? 2.5 : 2} />
-              <span className="text-[10px] font-display tracking-wider">{t.jp}</span>
+              {/* 上方紙膠帶（active 才顯示）*/}
+              {active && (
+                <div
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-1.5"
+                  style={{ background: '#FF8B5A' }}
+                />
+              )}
+              <Icon size={18} strokeWidth={active ? 2.5 : 1.8} />
+              <span className="text-[11px] font-display font-semibold tracking-wider">{t.jp}</span>
               <span className="text-[9px] tracking-wider opacity-70">{t.label}</span>
-              {active && <div className="absolute bottom-0 w-8 h-[2px] bg-shu" style={{ marginBottom: '0' }} />}
             </button>
           )
         })}

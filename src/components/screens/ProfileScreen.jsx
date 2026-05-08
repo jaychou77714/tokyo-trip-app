@@ -1,57 +1,79 @@
-import React, { useState, useEffect } from 'react'
-import { LogOut, Heart, Database, Cloud, CloudOff } from 'lucide-react'
-import { Button, EditorialHeader, ConfirmDialog } from '../Common'
+import React, { useState } from 'react'
+import { LogOut, Heart, Cloud, CloudOff } from 'lucide-react'
+import { Button, EditorialHeader, ConfirmDialog, WashiTape } from '../Common'
 import { hasSupabase } from '../../lib/supabase'
 import { PLACES, getPlaceById } from '../../data/places'
 import { CATEGORIES } from '../../data/categories'
 
 export default function ProfileScreen({ user, favorites, onLogout, onSelectPlace }) {
   const [confirmLogout, setConfirmLogout] = useState(false)
-  const favPlaces = favorites
-    .map(f => getPlaceById(f.place_id))
-    .filter(Boolean)
+  const favPlaces = favorites.map(f => getPlaceById(f.place_id)).filter(Boolean)
 
   return (
     <div className="paper-bg min-h-screen pb-24">
       <div className="px-5 pt-12 pb-6 max-w-3xl mx-auto">
-        <EditorialHeader jp="プロフィール" zh="MY PROFILE" accent="05" />
+        <EditorialHeader jp="プロフィール" zh="My Profile" accent="05" tape="shu" />
 
-        {/* 使用者資訊 */}
-        <div className="bg-sumi text-kinari p-5 mb-5">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="font-display text-shu text-xs tracking-[0.3em]">USER</span>
-            <div className="flex-1 h-px bg-kinari/30" />
+        {/* 使用者資訊卡片 */}
+        <div
+          className="p-5 mb-5 relative"
+          style={{
+            background: '#3D2817',
+            color: '#FAF6EC',
+            border: '1.5px solid #3D2817',
+            boxShadow: '4px 4px 0 #FF8B5A',
+          }}
+        >
+          {/* 角落紙膠帶 */}
+          <div
+            className="absolute -top-2 right-6 w-20 h-4 opacity-90"
+            style={{
+              background: '#FF8B5A',
+              backgroundImage: 'linear-gradient(180deg, transparent 47%, rgba(255,255,255,0.4) 47%, rgba(255,255,255,0.4) 53%, transparent 53%)',
+              transform: 'rotate(-3deg)',
+            }}
+          />
+          <div className="flex items-center gap-3 mb-3">
+            <span className="font-display text-shu text-xs tracking-[0.3em]">★ USER ★</span>
+            <div className="flex-1 h-px" style={{ background: 'rgba(250,246,236,0.3)' }} />
           </div>
           <h2 className="editorial-title text-2xl mb-1">{user.nickname}</h2>
           <p className="text-xs opacity-70 font-mono break-all">ID: {user.id}</p>
         </div>
 
         {/* 連線狀態 */}
-        <div className="bg-white/40 border border-sumi/10 p-4 mb-5">
+        <div
+          className="paper-plain p-4 mb-5"
+          style={{
+            border: hasSupabase ? '1.5px dashed #7FA468' : '1.5px dashed #E84E4E',
+          }}
+        >
           <div className="flex items-center gap-2 mb-2">
             {hasSupabase ? (
-              <Cloud size={16} className="text-[#7a8a5a]" />
+              <Cloud size={16} className="text-wakaba" />
             ) : (
-              <CloudOff size={16} className="text-shu" />
+              <CloudOff size={16} className="text-stamp" />
             )}
-            <span className="text-sm font-medium">
-              {hasSupabase ? '雲端同步啟用中' : '本地模式（未連 Supabase）'}
+            <span className="text-sm font-display font-semibold">
+              {hasSupabase ? '雲端同步啟用中 ✓' : '本地模式（未連 Supabase）'}
             </span>
           </div>
-          <p className="text-[11px] text-usuzumi leading-relaxed">
+          <p className="text-[11px] text-usuzumi leading-relaxed font-display">
             {hasSupabase
               ? '資料儲存在 Supabase 雲端，更換裝置時用同樣暱稱即可繼續使用。'
-              : '尚未設定 Supabase 環境變數，資料只存在這台裝置的瀏覽器中。換瀏覽器或清除快取會遺失資料。'}
+              : '尚未設定 Supabase 環境變數，資料只存在這台裝置的瀏覽器中。'}
           </p>
         </div>
 
         {/* 收藏 */}
         <div className="mb-5">
           <h3 className="font-display font-bold text-sm mb-3 flex items-center gap-2">
-            <Heart size={14} className="text-shu" /> 我的收藏 · {favPlaces.length} 個
+            <Heart size={14} className="text-stamp" fill="#E84E4E" />
+            ★ 我的收藏 · {favPlaces.length} 個
           </h3>
           {favPlaces.length === 0 ? (
-            <div className="bg-white/30 border border-dashed border-sumi/20 p-6 text-center text-xs text-usuzumi">
+            <div className="paper-plain p-6 text-center text-xs text-usuzumi font-display"
+              style={{ border: '1.5px dashed #D4B896' }}>
               尚無收藏。在「景點美食」頁面點愛心可加入收藏。
             </div>
           ) : (
@@ -62,7 +84,10 @@ export default function ProfileScreen({ user, favorites, onLogout, onSelectPlace
                   <button
                     key={p.id}
                     onClick={() => onSelectPlace && onSelectPlace(p)}
-                    className="text-left bg-white/50 hover:bg-white/80 border border-sumi/10 p-3 flex items-center gap-3 transition-all"
+                    className="text-left paper-plain p-3 flex items-center gap-3 transition-all"
+                    style={{ border: '1.5px solid #3D2817', boxShadow: '2px 2px 0 #3D2817' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.boxShadow = `2px 2px 0 ${cat?.color || '#3D2817'}` }}
+                    onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '2px 2px 0 #3D2817' }}
                   >
                     <div className="w-2 h-10" style={{ background: cat?.color }} />
                     <div className="flex-1 min-w-0">
@@ -76,14 +101,14 @@ export default function ProfileScreen({ user, favorites, onLogout, onSelectPlace
           )}
         </div>
 
-        {/* 資料統計 */}
-        <div className="bg-white/40 border border-sumi/10 p-4 mb-5">
-          <h3 className="text-[11px] tracking-widest uppercase text-usuzumi mb-3">DATABASE STATS</h3>
+        {/* 統計 */}
+        <div className="paper-plain p-4 mb-5" style={{ border: '1.5px dashed #6B4423' }}>
+          <h3 className="text-[11px] tracking-widest uppercase text-usuzumi mb-3 font-mono">★ DATABASE STATS ★</h3>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <Stat label="精選地點" value={`${PLACES.length} 個`} />
             <Stat label="分類" value={`${CATEGORIES.length} 大類`} />
             <Stat label="收藏" value={`${favPlaces.length} 個`} />
-            <Stat label="App 版本" value="v1.0" />
+            <Stat label="App 版本" value="v1.1" />
           </div>
         </div>
 
@@ -91,8 +116,8 @@ export default function ProfileScreen({ user, favorites, onLogout, onSelectPlace
           <LogOut size={14} /> 登出
         </Button>
 
-        <p className="text-[10px] text-center text-usuzumi mt-6 leading-relaxed">
-          東京散策 · Tokyo Trip Companion v1.0<br />
+        <p className="text-[10px] text-center text-usuzumi mt-6 leading-relaxed font-display italic">
+          東京散策 · Tokyo Trip Companion v1.1<br />
           Built with React + Supabase + OpenStreetMap<br />
           地圖資料 © OpenStreetMap contributors
         </p>
@@ -114,7 +139,7 @@ export default function ProfileScreen({ user, favorites, onLogout, onSelectPlace
 function Stat({ label, value }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-wider text-usuzumi">{label}</div>
+      <div className="text-[10px] uppercase tracking-wider text-usuzumi font-mono">{label}</div>
       <div className="font-display font-bold">{value}</div>
     </div>
   )

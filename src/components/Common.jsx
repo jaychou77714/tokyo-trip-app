@@ -6,17 +6,20 @@ export function Modal({ open, onClose, title, children, maxWidth = 'max-w-lg' })
   if (!open) return null
   return (
     <div
-      className="fixed inset-0 z-[1000] flex items-end md:items-center justify-center bg-sumi/70 backdrop-blur-sm animate-fade-up"
+      className="fixed inset-0 z-[1000] flex items-end md:items-center justify-center bg-sumi/60 backdrop-blur-sm animate-fade-up"
       onClick={onClose}
     >
       <div
-        className={`bg-kinari w-full ${maxWidth} md:rounded-lg rounded-t-2xl max-h-[90vh] overflow-hidden flex flex-col card-shadow-hover`}
+        className={`paper-plain w-full ${maxWidth} md:rounded-md rounded-t-2xl max-h-[90vh] overflow-hidden flex flex-col border-2 border-sumi card-shadow-hover relative`}
         onClick={(e) => e.stopPropagation()}
       >
         {title && (
-          <div className="flex items-center justify-between px-5 py-4 border-b border-sumi/10">
-            <h3 className="editorial-title text-xl">{title}</h3>
-            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-sumi/5">
+          <div className="flex items-center justify-between px-5 py-4 border-b-2 border-dashed border-gold relative">
+            <div className="flex items-center gap-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-stamp"></span>
+              <h3 className="editorial-title text-xl">{title}</h3>
+            </div>
+            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center hover:bg-shu/15 rounded-full">
               <X size={18} />
             </button>
           </div>
@@ -27,20 +30,52 @@ export function Modal({ open, onClose, title, children, maxWidth = 'max-w-lg' })
   )
 }
 
-// ===== 按鈕 =====
+// ===== 按鈕（雙層紙片風）=====
 export function Button({ children, variant = 'primary', size = 'md', className = '', ...props }) {
-  const base = 'inline-flex items-center justify-center font-medium transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed gap-2'
+  const base = 'relative inline-flex items-center justify-center font-display font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed gap-2 tracking-wider'
   const sizes = {
     sm: 'px-3 py-1.5 text-xs',
     md: 'px-4 py-2.5 text-sm',
     lg: 'px-6 py-3 text-base',
   }
+
+  // 雙層紙片變體：用 outer wrapper + inner button
+  if (variant === 'primary' || variant === 'shu' || variant === 'stamp') {
+    const colorMap = {
+      primary: 'bg-sumi text-kinari2',
+      shu: 'bg-shu text-kinari2',
+      stamp: 'bg-stamp text-kinari2',
+    }
+    return (
+      <button
+        className={`${base} ${sizes[size]} ${colorMap[variant]} btn-paper-effect ${className}`}
+        style={{
+          border: '1.5px solid #3D2817',
+          boxShadow: '3px 3px 0 #3D2817',
+        }}
+        onMouseDown={(e) => {
+          e.currentTarget.style.boxShadow = '1px 1px 0 #3D2817'
+          e.currentTarget.style.transform = 'translate(2px, 2px)'
+        }}
+        onMouseUp={(e) => {
+          e.currentTarget.style.boxShadow = '3px 3px 0 #3D2817'
+          e.currentTarget.style.transform = 'translate(0, 0)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = '3px 3px 0 #3D2817'
+          e.currentTarget.style.transform = 'translate(0, 0)'
+        }}
+        {...props}
+      >
+        {children}
+      </button>
+    )
+  }
+
   const variants = {
-    primary: 'bg-sumi text-kinari hover:bg-sumi/90',
-    shu: 'bg-shu text-kinari hover:bg-shu/90',
-    outline: 'border border-sumi text-sumi hover:bg-sumi hover:text-kinari',
-    ghost: 'text-sumi hover:bg-sumi/5',
-    danger: 'border border-shu text-shu hover:bg-shu hover:text-kinari',
+    outline: 'border-2 border-dashed border-sumi text-sumi hover:bg-sumi hover:text-kinari2 hover:border-solid',
+    ghost: 'text-sumi hover:bg-sumi/10',
+    danger: 'border-2 border-dashed border-stamp text-stamp hover:bg-stamp hover:text-kinari2 hover:border-solid',
   }
   return (
     <button className={`${base} ${sizes[size]} ${variants[variant]} ${className}`} {...props}>
@@ -53,12 +88,12 @@ export function Button({ children, variant = 'primary', size = 'md', className =
 export function Input({ label, error, className = '', ...props }) {
   return (
     <label className="block">
-      {label && <span className="block text-xs font-medium text-usuzumi mb-1.5 tracking-wider">{label}</span>}
+      {label && <span className="block text-xs font-display font-semibold text-usuzumi mb-1.5 tracking-wider">✎ {label}</span>}
       <input
-        className={`w-full px-3.5 py-2.5 bg-white/60 border border-sumi/15 focus:border-shu focus:outline-none text-sm transition-colors ${className}`}
+        className={`w-full form-input ${className}`}
         {...props}
       />
-      {error && <span className="block text-xs text-shu mt-1">{error}</span>}
+      {error && <span className="block text-xs text-stamp mt-1">⚠ {error}</span>}
     </label>
   )
 }
@@ -67,9 +102,9 @@ export function Input({ label, error, className = '', ...props }) {
 export function Textarea({ label, className = '', ...props }) {
   return (
     <label className="block">
-      {label && <span className="block text-xs font-medium text-usuzumi mb-1.5 tracking-wider">{label}</span>}
+      {label && <span className="block text-xs font-display font-semibold text-usuzumi mb-1.5 tracking-wider">✎ {label}</span>}
       <textarea
-        className={`w-full px-3.5 py-2.5 bg-white/60 border border-sumi/15 focus:border-shu focus:outline-none text-sm transition-colors resize-none ${className}`}
+        className={`w-full form-input resize-none ${className}`}
         {...props}
       />
     </label>
@@ -80,9 +115,9 @@ export function Textarea({ label, className = '', ...props }) {
 export function Select({ label, options, className = '', ...props }) {
   return (
     <label className="block">
-      {label && <span className="block text-xs font-medium text-usuzumi mb-1.5 tracking-wider">{label}</span>}
+      {label && <span className="block text-xs font-display font-semibold text-usuzumi mb-1.5 tracking-wider">✎ {label}</span>}
       <select
-        className={`w-full px-3.5 py-2.5 bg-white/60 border border-sumi/15 focus:border-shu focus:outline-none text-sm transition-colors ${className}`}
+        className={`w-full form-input ${className}`}
         {...props}
       >
         {options.map(o => (
@@ -98,37 +133,76 @@ export function Select({ label, options, className = '', ...props }) {
 // ===== Empty 狀態 =====
 export function EmptyState({ icon, title, desc, action }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-      {icon && <div className="text-5xl mb-4 opacity-40">{icon}</div>}
-      <div className="editorial-title text-xl mb-1.5">{title}</div>
-      {desc && <div className="text-sm text-usuzumi mb-5">{desc}</div>}
-      {action}
+    <div className="flex flex-col items-center justify-center py-14 px-6 text-center relative">
+      {/* 虛線框 */}
+      <div className="absolute inset-x-8 inset-y-4 border-2 border-dashed border-gold/60 pointer-events-none" />
+      {icon && <div className="text-5xl mb-4 opacity-50 relative">{icon}</div>}
+      <div className="editorial-title text-xl mb-1.5 relative">{title}</div>
+      {desc && <div className="text-sm text-usuzumi mb-5 relative">{desc}</div>}
+      {action && <div className="relative">{action}</div>}
     </div>
   )
 }
 
-// ===== 印章標籤 =====
-export function StampLabel({ children, color = '#c9302c' }) {
+// ===== 印章標籤（小型）=====
+export function StampLabel({ children, color = '#E84E4E' }) {
   return (
     <span
-      className="inline-flex items-center justify-center font-display font-bold tracking-widest text-[10px] px-1.5 py-0.5 border-2"
-      style={{ borderColor: color, color: color, transform: 'rotate(-2deg)' }}
+      className="inline-flex items-center justify-center font-display font-bold tracking-widest text-[10px] px-2 py-0.5 border-[1.5px]"
+      style={{ borderColor: color, color: color, transform: 'rotate(-2deg)', background: 'rgba(255,252,245,0.6)' }}
+    >
+      ◉ {children}
+    </span>
+  )
+}
+
+// ===== 圓形大印章 =====
+export function StampCircle({ children, color = '#E84E4E', size = 44 }) {
+  return (
+    <span
+      className="inline-flex items-center justify-center font-display font-bold flex-shrink-0"
+      style={{
+        width: size, height: size,
+        borderRadius: '50%',
+        border: `2px solid ${color}`,
+        color: color,
+        background: 'rgba(250,246,236,0.5)',
+        transform: 'rotate(-8deg)',
+        fontSize: size * 0.28,
+        letterSpacing: '0.05em',
+      }}
     >
       {children}
     </span>
   )
 }
 
-// ===== Editorial 標題（中日雙語）=====
-export function EditorialHeader({ jp, zh, accent = '01' }) {
+// ===== 紙膠帶標題 =====
+export function WashiTape({ children, color = 'shu', className = '' }) {
+  const colorClass = {
+    shu: 'washi',
+    blue: 'washi washi-blue',
+    green: 'washi washi-green',
+    yellow: 'washi washi-yellow',
+  }[color]
   return (
-    <div className="mb-6">
-      <div className="flex items-baseline gap-3 mb-1">
-        <span className="font-display text-shu text-xs tracking-[0.3em]">No.{accent}</span>
-        <div className="flex-1 deco-line text-sumi/30" />
+    <span className={`${colorClass} text-xs ${className}`}>
+      {children}
+    </span>
+  )
+}
+
+// ===== Editorial 標題（手帳風）=====
+export function EditorialHeader({ jp, zh, accent = '01', tape = 'shu' }) {
+  return (
+    <div className="mb-6 relative">
+      <div className="flex items-center gap-3 mb-3">
+        <WashiTape color={tape}>No.{accent}</WashiTape>
+        <div className="flex-1 deco-dashed" />
+        <span className="text-[10px] text-usuzumi tracking-widest font-mono">★ MEMO ★</span>
       </div>
       <h2 className="editorial-title text-3xl md:text-4xl">{jp}</h2>
-      <p className="text-xs text-usuzumi tracking-[0.2em] uppercase mt-1">{zh}</p>
+      <p className="text-xs text-usuzumi tracking-[0.2em] uppercase mt-1 font-mono">— {zh} —</p>
     </div>
   )
 }
@@ -142,10 +216,22 @@ export function Toast({ message, type = 'info', onClose }) {
     }
   }, [message, onClose])
   if (!message) return null
-  const bg = type === 'error' ? 'bg-shu' : type === 'success' ? 'bg-[#7a8a5a]' : 'bg-sumi'
+  const config = {
+    error: { bg: '#E84E4E', icon: '✗' },
+    success: { bg: '#7FA468', icon: '✓' },
+    info: { bg: '#3D2817', icon: '✎' },
+  }[type] || { bg: '#3D2817', icon: '✎' }
   return (
     <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[2000] animate-fade-up">
-      <div className={`${bg} text-kinari px-5 py-3 text-sm shadow-lg max-w-xs`}>
+      <div
+        className="text-kinari2 px-5 py-3 text-sm flex items-center gap-2 max-w-xs font-display"
+        style={{
+          background: config.bg,
+          border: '1.5px solid #3D2817',
+          boxShadow: '3px 3px 0 #3D2817',
+        }}
+      >
+        <span className="font-bold">{config.icon}</span>
         {message}
       </div>
     </div>
@@ -157,10 +243,10 @@ export function ConfirmDialog({ open, title, message, onConfirm, onCancel, confi
   return (
     <Modal open={open} onClose={onCancel} title={title} maxWidth="max-w-sm">
       <div className="px-5 py-4">
-        <p className="text-sm text-sumi/80 leading-relaxed mb-5">{message}</p>
+        <p className="text-sm text-sumi/85 leading-relaxed mb-5">{message}</p>
         <div className="flex gap-2 justify-end">
           <Button variant="ghost" onClick={onCancel}>{cancelText}</Button>
-          <Button variant={danger ? 'shu' : 'primary'} onClick={onConfirm}>{confirmText}</Button>
+          <Button variant={danger ? 'stamp' : 'primary'} onClick={onConfirm}>{confirmText}</Button>
         </div>
       </div>
     </Modal>
