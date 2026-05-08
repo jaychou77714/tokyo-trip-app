@@ -7,16 +7,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        sumi: '#1a1a1a',         // 墨黑
-        kinari: '#f5efe6',       // 生成色
-        shu: '#c9302c',          // 朱紅
-        usuzumi: '#5a5a5a',      // 薄墨
-        kinari2: '#ebe3d4',      // 較深生成色
-        gold: '#b8945f',         // 古金
+        sumi: '#3D2817',
+        kinari: '#FAF6EC',
+        kinari2: '#FFFCF5',
+        shu: '#FF8B5A',
+        usuzumi: '#6B4423',
+        gold: '#D4B896',
+        stamp: '#E84E4E',
+        sora: '#A8C5D9',
+        wakaba: '#7FA468',
+        kohaku: '#F0B450',
+        line: '#E8D8B5',
       },
       fontFamily: {
-        display: ['"Noto Serif JP"', '"Source Han Serif TC"', 'serif'],
+        display: ['"Klee One"', '"Noto Serif JP"', '"Source Han Serif TC"', 'serif'],
         body: ['"Noto Sans JP"', '"Source Han Sans TC"', 'sans-serif'],
+        hand: ['"Klee One"', '"Yusei Magic"', '"Noto Serif JP"', 'serif'],
         mono: ['"JetBrains Mono"', 'monospace']
       }
     },
