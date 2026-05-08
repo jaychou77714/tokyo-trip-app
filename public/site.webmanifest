@@ -1,0 +1,30 @@
+{
+  "name": "東京散策 · Tokyo Trip",
+  "short_name": "東京散策",
+  "description": "東京自助行 App · 行程規劃、景點美食、預算分帳",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "theme_color": "#FF8B5A",
+  "background_color": "#FAF6EC",
+  "display": "standalone",
+  "start_url": "/",
+  "scope": "/"
+}
