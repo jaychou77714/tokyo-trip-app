@@ -564,6 +564,32 @@ export async function deleteComment(commentId) {
 }
 
 // ============================================
+// v1.6 NEW: 共筆便條紙 trip_notes
+// ============================================
+export async function listTripNotes(tripId) {
+  if (!hasSupabase || !tripId || tripId.startsWith('local-')) return []
+  const { data } = await supabase
+    .from('trip_notes').select('*').eq('trip_id', tripId)
+    .order('created_at', { ascending: false })
+  return data || []
+}
+
+export async function addTripNote(note, userId) {
+  if (!hasSupabase || !note.trip_id || note.trip_id.startsWith('local-')) return null
+  const { data } = await supabase.from('trip_notes').insert({
+    trip_id: note.trip_id,
+    user_id: userId,
+    content: note.content,
+  }).select().single()
+  return data
+}
+
+export async function deleteTripNote(noteId) {
+  if (!hasSupabase) return
+  await supabase.from('trip_notes').delete().eq('id', noteId)
+}
+
+// ============================================
 // 版本檢查
 // ============================================
 export async function fetchVersionInfo() {

@@ -13,6 +13,7 @@ import PlaceDetailModal from './components/screens/PlaceDetailModal'
 import ToolsScreen from './components/screens/ToolsScreen'
 import ChecklistScreen from './components/screens/ChecklistScreen'
 import JrPassScreen from './components/screens/JrPassScreen'
+import JapaneseScreen from './components/screens/JapaneseScreen'
 import {
   getUser, clearUser, listTrips, listFavorites, toggleFavorite,
   saveItineraryItem, findTripByShareCode, joinTrip, fetchVersionInfo,
@@ -240,6 +241,9 @@ export default function App() {
       )}
       {view === 'tools' && toolView === 'jrpass' && (
         <JrPassScreen trips={trips} onBack={() => setToolView(null)} showToast={showToast} />
+      )}
+      {view === 'tools' && toolView === 'japanese' && (
+        <JapaneseScreen onBack={() => setToolView(null)} />
       )}
       {view === 'profile' && (
         <ProfileScreen

@@ -4,6 +4,8 @@ import { Button, Modal, Input, Textarea, Select, EmptyState } from '../Common'
 import MapView from '../MapView'
 import ReactionBar from '../ReactionBar'
 import CommentThread from '../CommentThread'
+import WeatherCard from '../WeatherCard'
+import NotepadSection from '../NotepadModal'
 import { RealtimeNotice } from '../UpdateNotice'
 import {
   listItinerary, saveItineraryItem, deleteItineraryItem, listTripMembers,
@@ -178,6 +180,14 @@ export default function TripDetailScreen({ trip, user, onBack, showToast, onAddF
           </button>
         </div>
 
+        {/* v1.6 天氣預報 */}
+        {trip.start_date && (
+          <div className="mt-4 paper-plain p-3"
+            style={{ border: '1.5px solid #3D2817', boxShadow: '2px 2px 0 #5DC9C9' }}>
+            <WeatherCard startDate={trip.start_date} endDate={trip.end_date} />
+          </div>
+        )}
+
         {/* 日期分頁 */}
         <div className="flex gap-2 mt-6 mb-4 overflow-x-auto pb-2 -mx-5 px-5">
           {Array.from({ length: totalDays }, (_, i) => i + 1).map(day => {
@@ -255,6 +265,15 @@ export default function TripDetailScreen({ trip, user, onBack, showToast, onAddF
               />
             ))}
           </div>
+        )}
+
+        {/* v1.6 共筆便條紙（行程詳情頁底部）*/}
+        {!trip.id?.toString().startsWith('local-') && (
+          <NotepadSection
+            tripId={trip.id}
+            currentUser={user}
+            members={members}
+          />
         )}
       </div>
 

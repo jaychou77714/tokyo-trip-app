@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { Plus, Calendar, Trash2, Edit3, Users } from 'lucide-react'
 import { Button, Modal, Input, EmptyState, EditorialHeader, ConfirmDialog } from '../Common'
+import CountdownBanner from '../CountdownBanner'
+import ExchangeRateCard from '../ExchangeRateCard'
+import JapanClock from '../JapanClock'
+import WeatherCard from '../WeatherCard'
 import { saveTrip, deleteTrip, listTripMembers } from '../../lib/storage'
 import { useTripsRealtime } from '../../lib/realtime'
 import dayjs from 'dayjs'
@@ -75,7 +79,38 @@ export default function HomeScreen({ user, trips, appVersion, onSelectTrip, show
           )}
         </div>
 
-        <div className="mt-10">
+        {/* v1.6 小確幸 */}
+        <div className="mt-6">
+          <CountdownBanner trips={trips} />
+
+          <div className="grid gap-2 md:grid-cols-2 mb-3">
+            <JapanClock />
+            <ExchangeRateCard />
+          </div>
+
+          {/* 最近行程的天氣 */}
+          {(() => {
+            const today = dayjs().startOf('day')
+            const upcoming = trips
+              .filter(t => t.start_date)
+              .map(t => ({ ...t, start: dayjs(t.start_date) }))
+              .filter(t => t.start.isAfter(today) || t.start.isSame(today))
+              .sort((a, b) => a.start.diff(b.start))[0]
+            if (!upcoming) return null
+            return (
+              <div className="paper-plain p-3 mb-3"
+                style={{ border: '1.5px solid #3D2817', boxShadow: '2px 2px 0 #5DC9C9' }}>
+                <WeatherCard
+                  startDate={upcoming.start_date}
+                  endDate={upcoming.end_date}
+                  compact
+                />
+              </div>
+            )
+          })()}
+        </div>
+
+        <div className="mt-6">
           <EditorialHeader jp="旅の計画" zh="My Trips" accent="01" tape="shu" />
 
           {trips.length === 0 ? (

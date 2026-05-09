@@ -1,5 +1,5 @@
 import React from 'react'
-import { CheckSquare, Train, ArrowRight } from 'lucide-react'
+import { CheckSquare, Train, ArrowRight, BookOpen } from 'lucide-react'
 import { EditorialHeader } from '../Common'
 
 const TOOLS = [
@@ -20,6 +20,15 @@ const TOOLS = [
     icon: Train,
     color: '#7FA468',
     items: ['Tokyo Subway 24/48/72h', 'JR Tokyo Wide Pass', 'JR Pass 全國版', '東京一日券', 'Greater Tokyo Pass'],
+  },
+  {
+    id: 'japanese',
+    name_zh: '日文小抄',
+    name_jp: '日本語フレーズ',
+    desc: '250 句旅遊常用語 · 翻卡片 · 日文/羅馬/中文',
+    icon: BookOpen,
+    color: '#C794D9',
+    items: ['寒暄 30', '餐廳 40', '交通 30', '購物 25', '飯店 25', '問路 20', '觀光 25', '結帳 20', '緊急 20', '數字 15'],
   },
 ]
 
