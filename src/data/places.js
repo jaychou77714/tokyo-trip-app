@@ -1,4 +1,4 @@
-// 110 筆精選地點資料
+// 113 筆精選地點資料（含 3 間水族館）
 // 註：座標為大致位置，營業時間 / 門票價格可能變動，出發前請查證官網
 // category: 1=必訪經典, 2=美食拉麵, 3=購物熱點, 4=季節限定, 5=在地文青
 
@@ -121,6 +121,11 @@ export const PLACES = [
   { id: 'togoshi', category: 5, name_zh: '戶越銀座商店街', name_jp: '戸越銀座商店街', area: '其他', type: '商店街', lat: 35.6121, lng: 139.7155, address: '東京都品川区戸越1', hours: '依各店', price: '–', tags: ['在地料理','文化體驗'], description: '東京最長商店街（1.3km），庶民美食散步最好。', website: '' },
   { id: 'nishiogi', category: 5, name_zh: '西荻窪（古董街）', name_jp: '西荻窪', area: '吉祥寺・下北澤', type: '街區', lat: 35.7048, lng: 139.5993, address: '東京都杉並区西荻窪', hours: '依各店', price: '–', tags: ['大人系','隱藏秘境'], description: '吉祥寺隔壁但安靜許多，古董店、爵士咖啡廳藏在巷弄。', website: '' },
   { id: 'tsukishima', category: 5, name_zh: '月島（文字燒+下町）', name_jp: '月島', area: '銀座・日本橋', type: '街區', lat: 35.6648, lng: 139.7806, address: '東京都中央区月島', hours: '依各店', price: '–', tags: ['在地料理','文化體驗'], description: '老下町氛圍 + 百間文字燒店，與銀座一站之隔的反差感。', website: '' },
+
+  // ===== 水族館（新增）=====
+  { id: 'kamogawa-sea-world', category: 1, name_zh: '鴨川海洋世界', name_jp: '鴨川シーワールド', area: '其他', type: '水族館', lat: 35.1112, lng: 140.1083, address: '千葉県鴨川市東町1464-18', hours: '9:00–17:00（依季節調整）', price: '¥3,300', tags: ['適合親子','排隊熱門','交通較遠'], description: '千葉縣著名水族館，虎鯨表演為招牌，海豚、白鯨、海獅多場精彩演出，從東京搭 JR 約 2 小時。', website: 'https://www.kamogawa-seaworld.jp' },
+  { id: 'sunshine-aquarium', category: 1, name_zh: '陽光水族館', name_jp: 'サンシャイン水族館', area: '其他', type: '水族館', lat: 35.7295, lng: 139.7194, address: '東京都豊島区東池袋3-1（陽光城頂樓）', hours: '9:30–21:00（依季節調整）', price: '¥2,800', tags: ['適合親子','網美打卡','室內景點'], description: '池袋陽光城頂樓的天空綠洲水族館，企鵝在頭上飛行的「天空之旅」最有名，雨天好去處。', website: 'https://sunshinecity.jp/aquarium/' },
+  { id: 'shinagawa-aquarium', category: 1, name_zh: '品川水族館', name_jp: 'しながわ水族館', area: '其他', type: '水族館', lat: 35.5898, lng: 139.7383, address: '東京都品川区勝島3-2-1', hours: '10:00–17:00（週二休）', price: '¥1,350', tags: ['適合親子','室內景點','C/P值高'], description: '品川區親子人氣水族館，海豚表演 + 海底隧道，門票相對便宜，從品川站搭巴士約 15 分。', website: 'https://www.aquarium.gr.jp' },
 ]
 
 // 工具：依分類取得
