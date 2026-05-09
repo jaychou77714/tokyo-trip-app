@@ -49,22 +49,44 @@ function localSet(key, value) {
 }
 
 // ============================================
-// 行程 trips
+// 行程 trips - v1.4.1 修復「孤兒行程消失」bug
 // ============================================
+/**
+ * 列出我能看到的所有行程：
+ * (A) 我建立的（user_id = me）
+ * (B) 我是成員的（trip_members）
+ * = A ∪ B（去重）
+ *
+ * 修復前：先查 B，沒有才 fallback A → 如果 B 有任何一筆，A 的孤兒行程就消失
+ */
 export async function listTrips(userId) {
   if (hasSupabase && userId) {
-    const { data: memberRows } = await supabase
-      .from('trip_members').select('trip_id').eq('user_id', userId)
-    const tripIds = (memberRows || []).map(r => r.trip_id)
-    if (tripIds.length > 0) {
-      const { data, error } = await supabase
-        .from('trips').select('*').in('id', tripIds)
-        .order('created_at', { ascending: false })
-      if (!error && data) return data
+    try {
+      // 同時抓兩邊
+      const [memberRowsResult, ownTripsResult] = await Promise.all([
+        supabase.from('trip_members').select('trip_id').eq('user_id', userId),
+        supabase.from('trips').select('*').eq('user_id', userId),
+      ])
+
+      const memberTripIds = (memberRowsResult.data || []).map(r => r.trip_id)
+      let memberTrips = []
+      if (memberTripIds.length > 0) {
+        const { data } = await supabase.from('trips').select('*').in('id', memberTripIds)
+        memberTrips = data || []
+      }
+
+      // 合併並用 Map 去重（以 id 為 key）
+      const ownTrips = ownTripsResult.data || []
+      const merged = new Map()
+      ;[...ownTrips, ...memberTrips].forEach(t => {
+        if (t && t.id) merged.set(t.id, t)
+      })
+      const all = Array.from(merged.values())
+      all.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+      return all
+    } catch (err) {
+      console.error('[listTrips] error:', err)
     }
-    const { data: ownData } = await supabase
-      .from('trips').select('*').eq('user_id', userId).order('created_at', { ascending: false })
-    if (ownData) return ownData
   }
   return localGet(`trips_${userId}`, [])
 }
@@ -79,18 +101,32 @@ export async function saveTrip(trip, userId) {
 
   if (hasSupabase && userId) {
     if (tripData.id) {
-      const { data } = await supabase.from('trips').update(tripData).eq('id', tripData.id).select().single()
+      // 更新既有
+      const { data, error } = await supabase.from('trips').update(tripData).eq('id', tripData.id).select().single()
+      if (error) console.error('[saveTrip] update failed:', error)
       if (data) return data
     } else {
-      const { data } = await supabase.from('trips').insert(tripData).select().single()
+      // 新建
+      const { data, error } = await supabase.from('trips').insert(tripData).select().single()
+      if (error) {
+        console.error('[saveTrip] insert trip failed:', error)
+      }
       if (data) {
-        await supabase.from('trip_members').insert({
+        // 把建立者加進 trip_members
+        const { error: memberError } = await supabase.from('trip_members').insert({
           trip_id: data.id, user_id: userId, role: 'owner', color: MEMBER_COLORS[0],
         })
+        if (memberError) {
+          // 即使 trip_members 失敗，trips 表已有，listTrips 用聯集仍能抓到
+          console.error('[saveTrip] trip_members insert failed (trip 仍正常建立):', memberError)
+        }
         return data
       }
     }
   }
+
+  // 雲端失敗或沒有 → 本地 fallback
+  console.warn('[saveTrip] fallback to localStorage')
   const trips = localGet(`trips_${userId}`, [])
   if (tripData.id) {
     const idx = trips.findIndex(t => t.id === tripData.id)
@@ -117,6 +153,31 @@ export async function findTripByShareCode(shareCode) {
   const { data } = await supabase
     .from('trips').select('*').eq('share_code', shareCode.toUpperCase()).maybeSingle()
   return data
+}
+
+/**
+ * 修復「孤兒行程」：把 trips 表裡 user_id = me 但不在 trip_members 的行程，補進 trip_members
+ * 用於診斷 / 一鍵修復用
+ */
+export async function repairOrphanTrips(userId) {
+  if (!hasSupabase || !userId) return { repaired: 0 }
+
+  const [{ data: ownTrips }, { data: memberRows }] = await Promise.all([
+    supabase.from('trips').select('id, title').eq('user_id', userId),
+    supabase.from('trip_members').select('trip_id').eq('user_id', userId),
+  ])
+
+  const inMembers = new Set((memberRows || []).map(m => m.trip_id))
+  const orphans = (ownTrips || []).filter(t => !inMembers.has(t.id))
+
+  let repaired = 0
+  for (const orphan of orphans) {
+    const { error } = await supabase.from('trip_members').insert({
+      trip_id: orphan.id, user_id: userId, role: 'owner', color: MEMBER_COLORS[0],
+    })
+    if (!error) repaired++
+  }
+  return { repaired, orphans: orphans.map(o => o.title) }
 }
 
 // ============================================
@@ -434,35 +495,25 @@ export async function clearChecklist(tripId) {
 }
 
 // ============================================
-// v1.4 NEW: 表態 reactions
+// 表態 reactions
 // ============================================
-/**
- * 列出某個行程內的所有 reactions（一次撈完比較有效率）
- */
 export async function listTripReactions(tripId) {
   if (!hasSupabase || tripId.startsWith('local-')) return []
   const { data } = await supabase.from('reactions').select('*').eq('trip_id', tripId)
   return data || []
 }
 
-/**
- * 切換表態（toggle）
- */
 export async function toggleReaction(itemType, itemId, tripId, emoji, userId) {
   if (!hasSupabase || tripId.startsWith('local-')) return null
-
-  // 先查是否已有
   const { data: existing } = await supabase
     .from('reactions').select('id')
     .eq('item_type', itemType).eq('item_id', itemId)
     .eq('user_id', userId).eq('emoji', emoji).maybeSingle()
 
   if (existing) {
-    // 取消
     await supabase.from('reactions').delete().eq('id', existing.id)
     return { action: 'removed' }
   } else {
-    // 新增
     const { data } = await supabase.from('reactions').insert({
       item_type: itemType, item_id: itemId, trip_id: tripId,
       user_id: userId, emoji,
@@ -472,11 +523,8 @@ export async function toggleReaction(itemType, itemId, tripId, emoji, userId) {
 }
 
 // ============================================
-// v1.4 NEW: 留言 comments
+// 留言 comments
 // ============================================
-/**
- * 列出某個 item 的所有留言
- */
 export async function listComments(itemId) {
   if (!hasSupabase) return []
   const { data } = await supabase
@@ -485,9 +533,6 @@ export async function listComments(itemId) {
   return data || []
 }
 
-/**
- * 列出整個 trip 的留言計數（Map<itemId, count>）
- */
 export async function listTripCommentCounts(tripId) {
   if (!hasSupabase || tripId.startsWith('local-')) return {}
   const { data } = await supabase
@@ -511,7 +556,7 @@ export async function deleteComment(commentId) {
 }
 
 // ============================================
-// v1.4 NEW: 版本檢查
+// 版本檢查
 // ============================================
 export async function fetchVersionInfo() {
   try {
