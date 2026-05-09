@@ -20,8 +20,10 @@ export default {
         line: '#E8D8B5',
       },
       fontFamily: {
+        // 標題保留 Klee One 手寫風
         display: ['"Klee One"', '"Noto Serif JP"', '"Source Han Serif TC"', 'serif'],
-        body: ['"Noto Sans JP"', '"Source Han Sans TC"', 'sans-serif'],
+        // 內文改用 Noto Sans JP（更粗更清楚）
+        body: ['"Noto Sans JP"', '"Source Han Sans TC"', '-apple-system', 'sans-serif'],
         hand: ['"Klee One"', '"Yusei Magic"', '"Noto Serif JP"', 'serif'],
         mono: ['"JetBrains Mono"', 'monospace']
       }
