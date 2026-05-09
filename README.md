@@ -1,135 +1,134 @@
-# 東京散策 · Tokyo Trip Companion v1.2
+# 東京散策 · Tokyo Trip Companion v1.3
 
-> ✨ **v1.2 更新**：新增「道具」工具箱頁，包含**行前 Checklist** + **JR Pass 計算機**
-
----
-
-## ✨ v1.2 新增功能
-
-### 🛠 工具箱（新 Tab：道具）
-TabBar 從 5 格擴充為 6 格，新增「道具」分頁。
-
-### 1️⃣ 行前 Checklist
-- **35 項預設範本**，分 8 大類（證件/金錢/交通/3C/衣物/藥品/行李/出發前確認）
-- **出發倒數**：自動算「距出發 X 天」
-- **完成度進度條**：visual 跑動的綠色條
-- 分類篩選（每類有自己的計數）
-- 自訂新增 / 刪除 / 勾選
-- 一鍵載入預設範本 / 清空
-- 與 Supabase 雲端同步（換裝置不掉資料）
-
-### 2️⃣ JR Pass 計算機
-- **7 種票券**內建：
-  - Tokyo Subway 24/48/72h、東京一日券
-  - JR Tokyo Wide Pass、Greater Tokyo Pass、JR Pass 全國版 7 天
-- **連動行程**自動估算：行程內地點數 × 平均單程票價
-- **5 種票價情境**選擇（市內 ¥220 / JR ¥180 / 跨區 ¥800 / 新幹線 ¥1500...）
-- **手動模式**：直接輸入估計總票價
-- **划算度判斷**：每張 Pass 顯示「比單買省 ¥X」或「貴 ¥X」，划算的會貼綠色「划算」紙膠帶
-- 點 Pass 看詳細資訊（涵蓋範圍 / 購買地點 / 注意事項）
+> ✨ **v1.3 重大更新**：共編行程 + 成員管理 + 修改暱稱
 
 ---
 
-## 🔄 從 v1.1 升級（重要：要跑 SQL）
+## 🆕 v1.3 新功能
 
-### Step 1：跑 Supabase Migration
+### 1️⃣ 共編行程
+- 行程詳情頁頂部有**邀請成員**按鈕
+- 點擊產生**分享連結** `https://你的網址/?join=XXXXXXXX`
+- 朋友點連結 → 輸入暱稱 → 自動加入
+- **全員都能編輯**（自由度最大化）
 
-⚠️ v1.2 新增了一張 `checklist_items` 表，需要跑 SQL：
+### 2️⃣ 成員管理
+- 行程詳情頁頂部顯示成員列表（**彩色圓點 + 名字**）
+- 8 種顏色自動分配（橘藍綠黃紫紅青粉）
+- 邀請彈窗顯示「目前成員」+ 建立者標記
+
+### 3️⃣ 「by XX · 5 分鐘前」標示
+出現在 3 個地方：
+- 行程內景點（誰加的 / 改的）
+- 花費紀錄（誰記的）
+- Checklist 項目（誰勾的）
+
+每個 by 前面有一個小圓點（用該成員的顏色），一眼看出誰在做什麼。
+
+### 4️⃣ 修改暱稱
+- 「我的」頁面新增 ✏️ **改暱稱** 按鈕
+- 唯一檢查（不能跟別人重複）
+- 改名後**自動追溯**所有「by XX」紀錄
+
+### 5️⃣ 首頁分區
+- 「★ 我建立的」+ 「★ 共編中」兩區
+- 每張卡片顯示成員人數（如「2 人」「4 人」）
+- 共編行程**只能編輯不能刪除**（避免誤刪別人的）
+
+---
+
+## ⚠️ 部署順序（重要！）
+
+### Step 1：先到 Supabase 跑 SQL Migration
+
+⚠️ **這步必須先做**，不然新功能會報錯：
 
 1. 打開 Supabase Dashboard → 你的 `tokyo-trip` 專案
 2. 左側 **SQL Editor** → **+ New query**
-3. 把專案根目錄的 **`supabase-migration-v1.2.sql`** 整個複製貼上
-4. 按 **Run** → 應該看到 **Success. No rows returned** ✅
+3. 把 `supabase-migration-v1.3.sql` 整檔貼上
+4. 按 **Run** → 看到 **Success. No rows returned** ✅
 
-> 💡 這個 migration 只會新增一張表，**不會動到你現有的資料**（行程、收藏、花費全部保留）
+> ✅ 這個 migration 會：
+> - 新增 `trip_members` 表（成員關係）
+> - 加分享碼 / owner_id 欄位到 trips
+> - 加 added_by / updated_by / updated_at 到 4 張表
+> - **自動把你現有的行程都標為「擁有者 = 你」**（資料不會掉）
 
 ### Step 2：上傳新檔案到 GitHub
 
-下載這個 v1.2 zip → 解壓 → GitHub 上傳所有檔案（覆蓋）。
+下載 v1.3 zip → 解壓 → **進到 tokyo-trip 資料夾裡面** → 全選所有項目 → 拖進 GitHub。
 
-新增 / 變動的檔案：
-- 🆕 `src/data/checklist-template.js`
-- 🆕 `src/data/jrpass.js`
-- 🆕 `src/components/screens/ToolsScreen.jsx`
-- 🆕 `src/components/screens/ChecklistScreen.jsx`
-- 🆕 `src/components/screens/JrPassScreen.jsx`
-- 🆕 `supabase-migration-v1.2.sql`
-- ✏️ `src/App.jsx`（加路由 + TabBar 改 6 格）
-- ✏️ `src/lib/storage.js`（加 checklist 雲端同步）
+⚠️ **建議先砍 src 資料夾再傳**（避免舊檔殘留）：
+1. 進 `src/` → 右上角 ⋯ → **Delete this directory**
+2. 回首頁 → Add file → Upload files
+3. 把解壓後的 `src/` 整個拖進去
+4. 同時其他根目錄檔案也拖進去（會自動覆蓋）
 
-✅ **不變的檔案**：places.js / stations.js / categories.js / 其他 7 個 screen
+### Step 3：等 Vercel 自動部署 1-2 分鐘
 
-### Step 3：等 Vercel 自動部署
-1-2 分鐘後新版上線。
+### Step 4：手機強制重整
 
 ---
 
-## 📐 v1.2 完整檔案結構
+## 🆕 / ✏️ v1.3 變動的檔案
 
 ```
-tokyo-trip/
-├── package.json
-├── vite.config.js
-├── tailwind.config.js
-├── postcss.config.js
-├── index.html
-├── supabase-schema.sql              ← 完整建表（v1.0 用）
-├── supabase-migration-v1.2.sql      🆕 v1.2 增量
-├── README.md
-├── public/
-│   ├── torii.svg
-│   ├── favicon-16x16.png            ← (你之前加的 icon)
-│   ├── apple-touch-icon.png
-│   └── ...
-└── src/
-    ├── main.jsx
-    ├── App.jsx                       ✏️ 6 個 Tab + 工具路由
-    ├── index.css
-    ├── lib/
-    │   ├── supabase.js
-    │   ├── storage.js                ✏️ 加 checklist 同步
-    │   └── exchange.js
-    ├── data/
-    │   ├── categories.js
-    │   ├── places.js
-    │   ├── stations.js
-    │   ├── checklist-template.js     🆕 35 項預設清單
-    │   └── jrpass.js                 🆕 7 種 Pass + 票價估算
-    └── components/
-        ├── Common.jsx
-        ├── MapView.jsx
-        └── screens/
-            ├── LoginScreen.jsx
-            ├── HomeScreen.jsx
-            ├── TripDetailScreen.jsx
-            ├── PlacesScreen.jsx
-            ├── StationsScreen.jsx
-            ├── BudgetScreen.jsx
-            ├── ProfileScreen.jsx
-            ├── PlaceDetailModal.jsx
-            ├── ToolsScreen.jsx       🆕 工具總覽
-            ├── ChecklistScreen.jsx   🆕 行前清單
-            └── JrPassScreen.jsx      🆕 Pass 計算機
+🆕 新增：
+├── src/data/members.js                    （成員顏色 + 分享碼產生器 + 相對時間）
+└── supabase-migration-v1.3.sql            （增量 SQL）
+
+✏️ 修改：
+├── src/App.jsx                            （URL ?join 處理 + JoinModal）
+├── src/lib/storage.js                     （成員 API + 改暱稱 + by 標記）
+├── src/components/screens/HomeScreen.jsx  （我建立 / 共編中 分區）
+├── src/components/screens/TripDetailScreen.jsx  （成員列表 + 邀請 Modal）
+├── src/components/screens/BudgetScreen.jsx      （by XX 標示）
+├── src/components/screens/ChecklistScreen.jsx   （by XX 標示）
+└── src/components/screens/ProfileScreen.jsx     （改暱稱 Modal）
 ```
 
----
-
-## ⚠️ 使用提醒
-
-### Checklist
-- 第一次進去會看到「清單還是空的」 → 點「載入預設範本」一次載入 35 項
-- 每個行程有獨立的清單（不同行程不互通）
-- 預設項目可刪除，自訂項目會顯示「+自訂」標記
-
-### JR Pass 計算機
-- 估算為**粗略參考**（誤差約 ±15%）
-- 實際票價依路線距離計算（每兩站價格不同）
-- Pass 價格為 2026 年參考價，**出發前請確認官網**
-- 「划算」標示僅供參考，實際使用率還要看當天時間、目的地分布
+✅ **不變**：places.js / stations.js / categories.js / 其他 4 個 screen
 
 ---
 
-## 📋 完整功能（v1.0 + v1.1 + v1.2）
+## 💡 使用情境範例
+
+### 情境 1：你和太太一起規劃
+1. 你建立「2026 春櫻 5 日」行程
+2. 行程詳情頁點 **邀請** → 複製連結
+3. LINE 給太太
+4. 太太點連結 → 輸入「太太」 → 加入
+5. 兩人都能改行程 / 加景點 / 記花費
+6. 每筆紀錄都看得到「by 哈利」「by 太太」+ 顏色
+
+### 情境 2：四人團體
+- 大家都加入後，分帳功能可選擇「全部加入分帳」一鍵填入
+- 花費按下「分擔成員」可以快速勾選
+
+### 情境 3：暱稱衝突
+- 太太想用「太太」，但你也用過 → 系統會擋
+- 太太可以改成「太太🌸」之類
+
+---
+
+## 🐛 已知限制
+
+- **無即時通知**：對方改了，要重新整理才看得到
+- **無衝突保護**：兩人同時改同一筆 → 後存的覆蓋前面的
+- **無退出 / 踢人**：只能整個刪除行程
+- **本地模式不支援共編**：必須有 Supabase
+
+---
+
+## 🔒 安全性提醒
+
+- 邀請連結傳到 LINE / 訊息 → **任何拿到連結的人都能加入**
+- 知道分享碼也能加入（碼是 8 位英數，難猜但不是密碼）
+- 不要在行程備註裡放敏感資訊（信用卡號、護照號等）
+
+---
+
+## 📊 完整功能列表
 
 | 模組 | 狀態 |
 |---|---|
@@ -140,16 +139,12 @@ tokyo-trip/
 | 退稅追蹤 | v1.0 ✓ |
 | 暱稱識別 + 雲端同步 | v1.0 ✓ |
 | 日系手帳風 UI | v1.1 ✓ |
-| **行前 Checklist** | v1.2 🆕 |
-| **JR Pass 計算機** | v1.2 🆕 |
-
----
-
-## 🐛 已知限制
-
-- 無拖曳排序行程 / Checklist
-- 無多人即時共編
-- 無離線地圖
-- JR Pass 票價估算僅供參考
+| 行前 Checklist + 倒數 | v1.2 ✓ |
+| JR Pass 計算機 | v1.2 ✓ |
+| 字體放大 | v1.2.1 ✓ |
+| **共編行程 + 邀請連結** | v1.3 🆕 |
+| **成員管理 + 顏色標記** | v1.3 🆕 |
+| **by XX 標示** | v1.3 🆕 |
+| **修改暱稱** | v1.3 🆕 |
 
 —— 旅の安全を祈ります 🗼
