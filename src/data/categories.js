@@ -1,10 +1,11 @@
-// 5 大分類
+// 6 大分類
 export const CATEGORIES = [
   { id: 1, name: '必訪經典', emoji: '⛩', color: '#c9302c', desc: '東京旅遊必去地標' },
   { id: 2, name: '美食拉麵', emoji: '🍜', color: '#b8945f', desc: '拉麵壽司在地名店' },
   { id: 3, name: '購物熱點', emoji: '🛍', color: '#5a5a5a', desc: '百貨商圈購物天堂' },
   { id: 4, name: '季節限定', emoji: '🌸', color: '#d97a8a', desc: '櫻花楓葉燈飾打卡' },
   { id: 5, name: '在地文青', emoji: '☕', color: '#7a8a5a', desc: '小眾秘境文藝街區' },
+  { id: 6, name: '住宿', emoji: '🏨', color: '#C794D9', desc: '飯店民宿 Airbnb' },
 ]
 
 // 地區

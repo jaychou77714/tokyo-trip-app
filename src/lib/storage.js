@@ -386,36 +386,44 @@ export async function deleteTaxFree(id, tripId) {
 export function getICCards(userId) { return localGet(`ic_${userId}`, []) }
 export function saveICCards(userId, cards) { localSet(`ic_${userId}`, cards) }
 
-// ===== 自訂景點 =====
+// ===== 自訂景點（v1.5：公共共享池）=====
+// 所有使用者共用同一份自訂景點清單
 export async function listCustomPlaces(userId) {
-  if (hasSupabase && userId) {
-    const { data } = await supabase.from('custom_places').select('*').eq('user_id', userId)
-    if (data) { localSet(`custom_${userId}`, data); return data }
+  if (hasSupabase) {
+    const { data } = await supabase.from('custom_places').select('*').order('created_at', { ascending: false })
+    if (data) { localSet(`custom_places_all`, data); return data }
   }
-  return localGet(`custom_${userId}`, [])
+  return localGet(`custom_places_all`, [])
 }
 
 export async function saveCustomPlace(place, userId) {
-  const data = { ...place, user_id: userId }
+  const data = { ...place }
   if (hasSupabase) {
     if (data.id && !data.id.startsWith('local-')) {
       const { data: res } = await supabase.from('custom_places').update(data).eq('id', data.id).select().single()
       if (res) return res
     } else {
       delete data.id
+      data.created_by = userId
+      data.user_id = userId  // 保留舊欄位相容
       const { data: res } = await supabase.from('custom_places').insert(data).select().single()
       if (res) {
-        const list = localGet(`custom_${userId}`, [])
-        list.push(res); localSet(`custom_${userId}`, list)
+        const list = localGet(`custom_places_all`, [])
+        list.unshift(res); localSet(`custom_places_all`, list)
         return res
       }
     }
   }
-  const list = localGet(`custom_${userId}`, [])
-  if (!data.id) data.id = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  // 本地後備
+  const list = localGet(`custom_places_all`, [])
+  if (!data.id) {
+    data.id = `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    data.created_by = userId
+    data.created_at = new Date().toISOString()
+  }
   const idx = list.findIndex(p => p.id === data.id)
-  if (idx >= 0) list[idx] = data; else list.push(data)
-  localSet(`custom_${userId}`, list)
+  if (idx >= 0) list[idx] = data; else list.unshift(data)
+  localSet(`custom_places_all`, list)
   return data
 }
 
@@ -423,8 +431,8 @@ export async function deleteCustomPlace(id, userId) {
   if (hasSupabase && !id.startsWith('local-')) {
     await supabase.from('custom_places').delete().eq('id', id)
   }
-  const list = localGet(`custom_${userId}`, []).filter(p => p.id !== id)
-  localSet(`custom_${userId}`, list)
+  const list = localGet(`custom_places_all`, []).filter(p => p.id !== id)
+  localSet(`custom_places_all`, list)
 }
 
 // ============================================

@@ -13,6 +13,7 @@ import { useTripRealtime } from '../../lib/realtime'
 import { PLACES, getPlaceById } from '../../data/places'
 import { CATEGORIES } from '../../data/categories'
 import { getRelativeTime } from '../../data/members'
+import { listCustomPlaces } from '../../lib/storage'
 import dayjs from 'dayjs'
 
 export default function TripDetailScreen({ trip, user, onBack, showToast, onAddFromPlaces }) {
@@ -20,6 +21,7 @@ export default function TripDetailScreen({ trip, user, onBack, showToast, onAddF
   const [members, setMembers] = useState([])
   const [reactions, setReactions] = useState([])
   const [commentCounts, setCommentCounts] = useState({})
+  const [customPlaces, setCustomPlaces] = useState([])
   const [activeDay, setActiveDay] = useState(1)
   const [editing, setEditing] = useState(null)
   const [showShare, setShowShare] = useState(false)
@@ -27,6 +29,12 @@ export default function TripDetailScreen({ trip, user, onBack, showToast, onAddF
   const totalDays = trip.days || 1
 
   useEffect(() => { loadAll() }, [trip])
+
+  // 自訂景點查找：把內建 + 自訂合併供顯示
+  function lookupPlace(placeId) {
+    if (!placeId) return null
+    return customPlaces.find(p => p.id === placeId) || getPlaceById(placeId)
+  }
 
   // ===== Realtime =====
   const handleRealtimeChange = useCallback(() => {
@@ -36,14 +44,16 @@ export default function TripDetailScreen({ trip, user, onBack, showToast, onAddF
   useTripRealtime(trip.id, user.id, handleRealtimeChange)
 
   async function loadAll() {
-    const [itemsData, membersData, reactionsData, commentsCount] = await Promise.all([
+    const [itemsData, membersData, reactionsData, commentsCount, customData] = await Promise.all([
       listItinerary(trip.id),
       listTripMembers(trip.id),
       listTripReactions(trip.id),
       listTripCommentCounts(trip.id),
+      listCustomPlaces(),
     ])
     setItems(itemsData); setMembers(membersData)
     setReactions(reactionsData); setCommentCounts(commentsCount)
+    setCustomPlaces(customData || [])
     setPendingUpdates(0)
   }
 
@@ -86,7 +96,7 @@ export default function TripDetailScreen({ trip, user, onBack, showToast, onAddF
 
   const mapMarkers = useMemo(() => {
     return dayItems.map((item, idx) => {
-      const place = item.place_id ? getPlaceById(item.place_id) : null
+      const place = item.place_id ? lookupPlace(item.place_id) : null
       const lat = place?.lat || item.custom_lat
       const lng = place?.lng || item.custom_lng
       if (!lat || !lng) return null
@@ -231,6 +241,7 @@ export default function TripDetailScreen({ trip, user, onBack, showToast, onAddF
                 key={item.id}
                 item={item} num={idx + 1}
                 tripId={trip.id} user={user} memberMap={memberMap} members={members}
+                customPlaces={customPlaces}
                 reactions={reactionsByItem[item.id] || []}
                 commentCount={commentCounts[item.id] || 0}
                 onEdit={() => setEditing(item)}
@@ -261,9 +272,12 @@ export default function TripDetailScreen({ trip, user, onBack, showToast, onAddF
   )
 }
 
-function ItineraryCard({ item, num, tripId, user, memberMap, members, reactions, commentCount,
+function ItineraryCard({ item, num, tripId, user, memberMap, members, customPlaces = [],
+                         reactions, commentCount,
                          onEdit, onDelete, onMoveDay, onToggleReaction, onCommentCountChange, totalDays }) {
-  const place = item.place_id ? getPlaceById(item.place_id) : null
+  const place = item.place_id
+    ? (customPlaces.find(p => p.id === item.place_id) || getPlaceById(item.place_id))
+    : null
   const cat = place ? CATEGORIES.find(c => c.id === place.category) : null
   const name = place?.name_zh || item.custom_name
   const subtitle = place ? `${place.area} · ${place.type}` : item.custom_address
@@ -415,6 +429,13 @@ function ItineraryEditModal({ open, item, totalDays, defaultDay, onClose, onSave
   const [form, setForm] = useState({})
   const [showPicker, setShowPicker] = useState(false)
   const [pickerSearch, setPickerSearch] = useState('')
+  const [customPlaces, setCustomPlaces] = useState([])
+
+  useEffect(() => {
+    if (open) {
+      listCustomPlaces().then(setCustomPlaces)
+    }
+  }, [open])
 
   useEffect(() => {
     if (item) setForm({
@@ -430,18 +451,28 @@ function ItineraryEditModal({ open, item, totalDays, defaultDay, onClose, onSave
     })
   }, [item, defaultDay])
 
-  const selectedPlace = form.place_id ? getPlaceById(form.place_id) : null
+  // 合併內建 + 自訂景點
+  const allPlaces = useMemo(() => {
+    return [
+      ...PLACES.map(p => ({ ...p, isCustom: false })),
+      ...customPlaces.map(p => ({ ...p, isCustom: true })),
+    ]
+  }, [customPlaces])
+
+  const selectedPlace = form.place_id
+    ? allPlaces.find(p => p.id === form.place_id) || getPlaceById(form.place_id)
+    : null
 
   const filteredPlaces = useMemo(() => {
-    if (!pickerSearch) return PLACES.slice(0, 30)
+    if (!pickerSearch) return allPlaces.slice(0, 50)
     const k = pickerSearch.toLowerCase()
-    return PLACES.filter(p =>
-      p.name_zh.toLowerCase().includes(k) ||
-      p.name_jp.toLowerCase().includes(k) ||
-      p.type.toLowerCase().includes(k) ||
-      p.area.toLowerCase().includes(k)
-    ).slice(0, 30)
-  }, [pickerSearch])
+    return allPlaces.filter(p =>
+      (p.name_zh || '').toLowerCase().includes(k) ||
+      (p.name_jp || '').toLowerCase().includes(k) ||
+      (p.type || '').toLowerCase().includes(k) ||
+      (p.area || '').toLowerCase().includes(k)
+    ).slice(0, 50)
+  }, [pickerSearch, allPlaces])
 
   return (
     <Modal open={open} onClose={onClose} title={item?.id ? '編輯行程項目' : '加入行程'}>
@@ -461,10 +492,10 @@ function ItineraryEditModal({ open, item, totalDays, defaultDay, onClose, onSave
               <button onClick={() => setShowPicker(!showPicker)}
                 className="w-full p-2.5 paper-plain text-sm text-left hover:bg-shu/10 transition-colors font-display"
                 style={{ border: '1.5px dashed #6B4423' }}>
-                從 110 個精選地點選擇 →
+                從 {allPlaces.length} 個地點選擇 → <span className="text-[10px] text-usuzumi">（含自訂）</span>
               </button>
-              <div className="text-center text-[11px] text-usuzumi font-display">— 或自訂景點 —</div>
-              <Input placeholder="自訂景點名稱（如：飯店、Airbnb）"
+              <div className="text-center text-[11px] text-usuzumi font-display">— 或快速輸入名稱（不存入清單）—</div>
+              <Input placeholder="臨時景點（如：○○拉麵）"
                 value={form.custom_name || ''}
                 onChange={(e) => setForm({ ...form, custom_name: e.target.value })} />
               {form.custom_name && (
@@ -488,7 +519,10 @@ function ItineraryEditModal({ open, item, totalDays, defaultDay, onClose, onSave
                     setShowPicker(false)
                   }}
                   className="w-full text-left px-3 py-2 hover:bg-shu/10 border-b border-dashed border-gold/50 last:border-b-0">
-                  <div className="text-sm font-display">{p.name_zh}</div>
+                  <div className="text-sm font-display flex items-center gap-1">
+                    {p.name_zh}
+                    {p.isCustom && <span className="text-[9px] px-1 py-0 bg-shu text-kinari2 font-mono">自訂</span>}
+                  </div>
                   <div className="text-[11px] text-usuzumi">{p.type} · {p.area}</div>
                 </button>
               ))}

@@ -225,6 +225,7 @@ export default function App() {
       )}
       {view === 'places' && (
         <PlacesScreen favorites={favorites} onToggleFavorite={handleToggleFavorite}
+          user={user} showToast={showToast}
           onAddToTrip={selectedTrip ? handleAddPlaceToTrip : null} />
       )}
       {view === 'stations' && <StationsScreen onSelectPlace={setGlobalPlaceModal} />}
