@@ -14,6 +14,7 @@ import {
 import { useTripRealtime } from '../../lib/realtime'
 import { PLACES, getPlaceById } from '../../data/places'
 import { CATEGORIES } from '../../data/categories'
+import { TRANSIT_MODES, getTransitMode } from '../../data/transit'
 import { getRelativeTime } from '../../data/members'
 import { listCustomPlaces } from '../../lib/storage'
 import dayjs from 'dayjs'
@@ -68,6 +69,24 @@ export default function TripDetailScreen({ trip, user, onBack, showToast, onAddF
     if (!data.place_id && !data.custom_name) {
       showToast('請選擇景點或輸入自訂名稱', 'error'); return
     }
+
+    // v1.7 自動排時間：依「前一個景點結束時間 + 移動時間」推算
+    // 如果勾了「鎖定」就不動使用者填的時間
+    if (!data.time_locked && data.transit_min > 0) {
+      const sameDayItems = items
+        .filter(i => i.day_number === data.day_number && i.id !== data.id)
+        .sort((a, b) => (a.order_index || 0) - (b.order_index || 0))
+
+      const prev = sameDayItems[sameDayItems.length - 1]
+      if (prev && prev.start_time && prev.duration_min) {
+        const [ph, pm] = prev.start_time.split(':').map(Number)
+        const totalMin = ph * 60 + pm + (prev.duration_min || 0) + data.transit_min
+        const newH = Math.floor(totalMin / 60) % 24
+        const newM = totalMin % 60
+        data.start_time = `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`
+      }
+    }
+
     await saveItineraryItem(data, trip.id, user.id)
     setEditing(null)
     showToast('✿ 已加入行程', 'success')
@@ -224,7 +243,22 @@ export default function TripDetailScreen({ trip, user, onBack, showToast, onAddF
         </div>
 
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-display font-bold text-sm tracking-wider">★ DAY {activeDay} スケジュール</h3>
+          <div>
+            <h3 className="font-display font-bold text-sm tracking-wider">★ DAY {activeDay} スケジュール</h3>
+            {dayItems.length > 0 && (() => {
+              const stayMin = dayItems.reduce((sum, i) => sum + (i.duration_min || 0), 0)
+              const transitMin = dayItems.reduce((sum, i) => sum + (i.transit_min || 0), 0)
+              const total = stayMin + transitMin
+              const h = Math.floor(total / 60)
+              const m = total % 60
+              return (
+                <div className="text-[10px] text-usuzumi font-mono mt-0.5">
+                  ★ {dayItems.length} 景點 · 總時長 {h > 0 ? `${h}h ` : ''}{m}min
+                  {transitMin > 0 && <span className="text-shu"> · 移動 {transitMin}min</span>}
+                </div>
+              )
+            })()}
+          </div>
           <Button variant="shu" size="sm" onClick={() => setEditing({ day_number: activeDay })}>
             <Plus size={14} /> 加入景點
           </Button>
@@ -247,22 +281,31 @@ export default function TripDetailScreen({ trip, user, onBack, showToast, onAddF
         ) : (
           <div className="space-y-2">
             {dayItems.map((item, idx) => (
-              <ItineraryCard
-                key={item.id}
-                item={item} num={idx + 1}
-                tripId={trip.id} user={user} memberMap={memberMap} members={members}
-                customPlaces={customPlaces}
-                reactions={reactionsByItem[item.id] || []}
-                commentCount={commentCounts[item.id] || 0}
-                onEdit={() => setEditing(item)}
-                onDelete={() => handleDelete(item)}
-                onMoveDay={(newDay) => handleMoveDay(item, newDay)}
-                onToggleReaction={(emoji) => handleToggleReaction(item.id, emoji)}
-                onCommentCountChange={(itemId, count) => {
-                  setCommentCounts(prev => ({ ...prev, [itemId]: count }))
-                }}
-                totalDays={totalDays}
-              />
+              <React.Fragment key={item.id}>
+                {/* 移動時間箭頭（每個項目「上方」顯示，第一個項目顯示「從住宿出發」）*/}
+                {item.transit_min > 0 && (
+                  <TransitArrow
+                    minutes={item.transit_min}
+                    mode={item.transit_mode}
+                    isFirst={idx === 0}
+                  />
+                )}
+                <ItineraryCard
+                  item={item} num={idx + 1}
+                  tripId={trip.id} user={user} memberMap={memberMap} members={members}
+                  customPlaces={customPlaces}
+                  reactions={reactionsByItem[item.id] || []}
+                  commentCount={commentCounts[item.id] || 0}
+                  onEdit={() => setEditing(item)}
+                  onDelete={() => handleDelete(item)}
+                  onMoveDay={(newDay) => handleMoveDay(item, newDay)}
+                  onToggleReaction={(emoji) => handleToggleReaction(item.id, emoji)}
+                  onCommentCountChange={(itemId, count) => {
+                    setCommentCounts(prev => ({ ...prev, [itemId]: count }))
+                  }}
+                  totalDays={totalDays}
+                />
+              </React.Fragment>
             ))}
           </div>
         )}
@@ -286,6 +329,35 @@ export default function TripDetailScreen({ trip, user, onBack, showToast, onAddF
       <ShareModal
         open={showShare} trip={trip} members={members}
         onClose={() => setShowShare(false)} showToast={showToast}
+      />
+    </div>
+  )
+}
+
+// v1.7 景點間移動時間箭頭
+function TransitArrow({ minutes, mode = 'walk', isFirst = false }) {
+  const m = getTransitMode(mode)
+  return (
+    <div className="flex items-center gap-2 py-1 pl-6 my-0.5">
+      <div
+        className="w-0.5 h-3"
+        style={{ background: m.color }}
+      />
+      <div
+        className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-display"
+        style={{
+          background: '#FFFCF5',
+          border: `1.5px dashed ${m.color}`,
+          color: '#3D2817',
+        }}
+      >
+        <span style={{ fontSize: '13px' }}>{m.emoji}</span>
+        <span className="font-mono font-bold">{minutes} 分</span>
+        <span className="text-usuzumi">{isFirst ? '從住宿出發' : m.name}</span>
+      </div>
+      <div
+        className="w-0.5 h-3"
+        style={{ background: m.color }}
       />
     </div>
   )
@@ -467,6 +539,9 @@ function ItineraryEditModal({ open, item, totalDays, defaultDay, onClose, onSave
       start_time: item.start_time || '',
       duration_min: item.duration_min || 60,
       notes: item.notes || '',
+      transit_min: item.transit_min || 0,
+      transit_mode: item.transit_mode || 'walk',
+      time_locked: item.time_locked || false,
     })
   }, [item, defaultDay])
 
@@ -560,6 +635,59 @@ function ItineraryEditModal({ open, item, totalDays, defaultDay, onClose, onSave
           <Input label="停留分鐘" type="number" min="0" step="15"
             value={form.duration_min || ''}
             onChange={(e) => setForm({ ...form, duration_min: parseInt(e.target.value) || null })} />
+        </div>
+
+        {/* v1.7 移動時間 */}
+        <div className="paper-plain p-3" style={{ border: '1.5px dashed #6B4423' }}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-display font-semibold text-usuzumi tracking-wider">
+              ★ 從上一個地點過來
+            </span>
+            <span className="text-[10px] text-usuzumi font-display italic">
+              第一個景點請填從住宿出發
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <span className="block text-[10px] text-usuzumi mb-1 font-display">交通方式</span>
+              <div className="grid grid-cols-4 gap-1">
+                {TRANSIT_MODES.map(m => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setForm({ ...form, transit_mode: m.id })}
+                    className="p-1.5 text-xs font-display transition-all flex flex-col items-center"
+                    style={{
+                      background: form.transit_mode === m.id ? m.color : '#FFFCF5',
+                      color: form.transit_mode === m.id ? '#FAF6EC' : '#3D2817',
+                      border: form.transit_mode === m.id ? '1.5px solid #3D2817' : '1.5px dashed #D4B896',
+                    }}
+                  >
+                    <span className="text-base leading-none">{m.emoji}</span>
+                    <span className="text-[9px] mt-0.5">{m.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Input
+              label="移動分鐘（0 = 不顯示）"
+              type="number" min="0" step="5"
+              value={form.transit_min || 0}
+              onChange={(e) => setForm({ ...form, transit_min: parseInt(e.target.value) || 0 })}
+            />
+          </div>
+          <div className="mt-2 flex items-center gap-1.5">
+            <input
+              type="checkbox"
+              id="time_locked"
+              checked={form.time_locked || false}
+              onChange={(e) => setForm({ ...form, time_locked: e.target.checked })}
+              className="w-3.5 h-3.5"
+            />
+            <label htmlFor="time_locked" className="text-[10px] text-usuzumi font-display cursor-pointer">
+              🔒 鎖定到達時間（不被前面景點影響、不自動推算）
+            </label>
+          </div>
         </div>
 
         <Textarea label="備註（行程細節、預約編號⋯）" rows={2}
