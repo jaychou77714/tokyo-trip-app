@@ -83,7 +83,7 @@ export default function App() {
   }
 
   async function loadUserData(u) {
-    const [t, f] = await Promise.all([listTrips(u.id), listFavorites(u.id)])
+    const [t, f] = await Promise.all([listTrips(u.id, u.is_admin), listFavorites(u.id)])
     setTrips(t); setFavorites(f)
   }
 
@@ -150,7 +150,7 @@ export default function App() {
       if (result.success) {
         await loadUserData(newUser)
         showToast(result.alreadyMember ? '你已經是成員了' : `✿ 已加入「${joinPending.title}」`, 'success')
-        const updatedTrips = await listTrips(newUser.id)
+        const updatedTrips = await listTrips(newUser.id, newUser.is_admin)
         setTrips(updatedTrips)
         const trip = updatedTrips.find(t => t.id === joinPending.id)
         if (trip) { setSelectedTrip(trip); setView('trip') }
@@ -161,7 +161,7 @@ export default function App() {
       const result = await joinTrip(joinPending.id, user.id)
       if (result.success) {
         showToast(result.alreadyMember ? '你已經是成員了' : `✿ 已加入「${joinPending.title}」`, 'success')
-        const updatedTrips = await listTrips(user.id)
+        const updatedTrips = await listTrips(user.id, user.is_admin)
         setTrips(updatedTrips)
         const trip = updatedTrips.find(t => t.id === joinPending.id)
         if (trip) { setSelectedTrip(trip); setView('trip') }
@@ -179,11 +179,11 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (user && (view === 'budget' || view === 'tools')) listTrips(user.id).then(setTrips)
+    if (user && (view === 'budget' || view === 'tools')) listTrips(user.id, user.is_admin).then(setTrips)
   }, [view])
 
   function refreshTrips() {
-    if (user) listTrips(user.id).then(setTrips)
+    if (user) listTrips(user.id, user.is_admin).then(setTrips)
   }
 
   if (!user) {

@@ -56,8 +56,20 @@ export default function HomeScreen({ user, trips, appVersion, onSelectTrip, show
     onRefresh && onRefresh()
   }
 
-  const ownedTrips = trips.filter(t => t.owner_id === user.id || (!t.owner_id && t.user_id === user.id))
-  const sharedTrips = trips.filter(t => t.owner_id && t.owner_id !== user.id)
+  // 行程分區
+  // 一般使用者：ownedTrips（我建立的）+ sharedTrips（我參加的）
+  // 管理員：上面兩個 + observedTrips（觀察的）
+  const ownedTrips = trips.filter(t => {
+    if (user.is_admin) return t._isMine
+    return t.owner_id === user.id || (!t.owner_id && t.user_id === user.id)
+  })
+  const sharedTrips = trips.filter(t => {
+    if (user.is_admin) return t._isMember && !t._isMine
+    return t.owner_id && t.owner_id !== user.id
+  })
+  const observedTrips = user.is_admin
+    ? trips.filter(t => t._isObservable)
+    : []
 
   return (
     <div className="paper-bg min-h-screen pb-24">
@@ -170,6 +182,37 @@ export default function HomeScreen({ user, trips, appVersion, onSelectTrip, show
                 </div>
               )}
 
+              {/* v1.8 管理員觀察行程（隱形觀察）*/}
+              {observedTrips.length > 0 && (
+                <div className="mt-8">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span style={{ fontSize: '14px' }}>🔧</span>
+                    <span className="text-xs font-display font-bold" style={{ color: '#C794D9' }}>
+                      管理員視角 · 全雲端行程
+                    </span>
+                    <span className="text-[10px] text-usuzumi font-mono">{observedTrips.length}</span>
+                    <div className="flex-1 deco-dashed" />
+                  </div>
+                  <p className="text-[10px] text-usuzumi font-display italic mb-3">
+                    ※ 你正在隱形觀察 · 朋友不會看到你存在
+                  </p>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {observedTrips.map((trip, idx) => (
+                      <TripCard key={trip.id} trip={trip}
+                        memberCount={memberCounts[trip.id] || 1}
+                        tapeColor="#C794D9"
+                        onClick={() => onSelectTrip(trip)}
+                        onEdit={() => setEditing(trip)}
+                        onDelete={() => setConfirmDelete(trip)}
+                        canDelete={false}
+                        isShared={true}
+                        observerBy={trip._ownerNick}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {ownedTrips.length === 0 && (
                 <button onClick={() => setEditing({})}
                   className="mt-4 w-full border-2 border-dashed border-gold hover:border-shu hover:text-shu p-6 transition-all flex flex-col items-center justify-center text-usuzumi paper-plain group">
@@ -199,7 +242,7 @@ export default function HomeScreen({ user, trips, appVersion, onSelectTrip, show
   )
 }
 
-function TripCard({ trip, memberCount, tapeColor, onClick, onEdit, onDelete, canDelete, isShared }) {
+function TripCard({ trip, memberCount, tapeColor, onClick, onEdit, onDelete, canDelete, isShared, observerBy }) {
   const days = trip.days || (trip.start_date && trip.end_date
     ? dayjs(trip.end_date).diff(dayjs(trip.start_date), 'day') + 1 : 1)
   const tapeBg = { shu: '#FF8B5A', blue: '#A8C5D9', green: '#7FA468', yellow: '#F0B450' }[tapeColor]
@@ -245,7 +288,12 @@ function TripCard({ trip, memberCount, tapeColor, onClick, onEdit, onDelete, can
           </div>
         </div>
         {trip.notes && <p className="text-xs text-sumi/75 mt-2 line-clamp-2 italic font-display">{trip.notes}</p>}
-        {isShared && (
+        {observerBy ? (
+          <div className="mt-2 inline-flex items-center gap-1 text-[10px] font-display tracking-wider"
+            style={{ color: '#C794D9', border: '1px dashed #C794D9', padding: '2px 6px' }}>
+            🔧 觀察中 · by {observerBy}
+          </div>
+        ) : isShared && (
           <div className="mt-2 inline-flex items-center gap-1 text-[10px] font-display tracking-wider"
             style={{ color: '#FF8B5A', border: '1px dashed #FF8B5A', padding: '2px 6px' }}>
             ◉ 共編行程

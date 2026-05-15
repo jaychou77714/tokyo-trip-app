@@ -59,10 +59,39 @@ function localSet(key, value) {
  *
  * 修復前：先查 B，沒有才 fallback A → 如果 B 有任何一筆，A 的孤兒行程就消失
  */
-export async function listTrips(userId) {
+export async function listTrips(userId, isAdmin = false) {
   if (hasSupabase && userId) {
     try {
-      // 同時抓兩邊
+      // v1.8 管理員：直接拿全部
+      if (isAdmin) {
+        const { data: allTrips } = await supabase.from('trips').select('*')
+          .order('created_at', { ascending: false })
+        if (!allTrips) return []
+
+        // 抓所有 user 名字（用來顯示「by XXX」）
+        const userIds = [...new Set(allTrips.map(t => t.user_id).filter(Boolean))]
+        let userMap = {}
+        if (userIds.length > 0) {
+          const { data: usersData } = await supabase.from('users').select('id, nickname')
+            .in('id', userIds)
+          userMap = Object.fromEntries((usersData || []).map(u => [u.id, u.nickname]))
+        }
+
+        // 抓「我是成員」的 trip ids（用來標記分區）
+        const { data: myMembers } = await supabase.from('trip_members')
+          .select('trip_id').eq('user_id', userId)
+        const myMemberIds = new Set((myMembers || []).map(r => r.trip_id))
+
+        return allTrips.map(t => ({
+          ...t,
+          _ownerNick: userMap[t.user_id] || '?',
+          _isMine: t.user_id === userId,
+          _isMember: myMemberIds.has(t.id),
+          _isObservable: t.user_id !== userId && !myMemberIds.has(t.id),  // 觀察中
+        }))
+      }
+
+      // 一般使用者邏輯
       const [memberRowsResult, ownTripsResult] = await Promise.all([
         supabase.from('trip_members').select('trip_id').eq('user_id', userId),
         supabase.from('trips').select('*').eq('user_id', userId),
@@ -75,7 +104,6 @@ export async function listTrips(userId) {
         memberTrips = data || []
       }
 
-      // 合併並用 Map 去重（以 id 為 key）
       const ownTrips = ownTripsResult.data || []
       const merged = new Map()
       ;[...ownTrips, ...memberTrips].forEach(t => {
@@ -190,11 +218,12 @@ export async function listTripMembers(tripId) {
   if (!memberRows || memberRows.length === 0) return []
   const userIds = memberRows.map(m => m.user_id)
   const { data: users } = await supabase
-    .from('users').select('id, nickname').in('id', userIds)
+    .from('users').select('id, nickname, is_admin').in('id', userIds)
   return memberRows.map(m => ({
     ...m,
     user: users?.find(u => u.id === m.user_id) || { nickname: '?' },
-  })).sort((a, b) => {
+  })).filter(m => !m.user?.is_admin)  // v1.8：過濾掉管理員（隱形）
+    .sort((a, b) => {
     if (a.role === 'owner' && b.role !== 'owner') return -1
     if (b.role === 'owner' && a.role !== 'owner') return 1
     return new Date(a.joined_at) - new Date(b.joined_at)

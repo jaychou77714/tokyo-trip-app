@@ -50,12 +50,26 @@ export default function ProfileScreen({ user, favorites, appVersion, onLogout, o
             <span className="text-sm font-display font-semibold">
               {hasSupabase ? '雲端同步啟用中 ✓' : '本地模式（未連 Supabase）'}
             </span>
+            {user.is_admin && (
+              <span
+                className="text-[9px] font-mono px-1.5 py-0.5 font-bold tracking-wider"
+                style={{ background: '#C794D9', color: '#FAF6EC', border: '1.5px solid #3D2817' }}
+              >
+                🔧 ADMIN
+              </span>
+            )}
           </div>
           <p className="text-[11px] text-usuzumi leading-relaxed font-display">
             {hasSupabase
               ? '資料儲存在 Supabase 雲端 · v1.4 已啟用即時同步（其他人改了會即時通知）'
               : '尚未設定 Supabase 環境變數，資料只存在這台裝置的瀏覽器中'}
           </p>
+          {user.is_admin && (
+            <p className="text-[10px] text-purple-700 font-display italic mt-1.5"
+              style={{ color: '#A56EBA' }}>
+              ※ 管理員視角：可看到所有人的行程（隱形觀察）
+            </p>
+          )}
         </div>
 
         <div className="mb-5">
